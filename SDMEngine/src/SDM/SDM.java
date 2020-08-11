@@ -1,5 +1,6 @@
 package SDM;
 
+import Orders.Orders;
 import jaxb.schema.generated.*;
 
 import javax.xml.bind.JAXBContext;
@@ -15,6 +16,14 @@ public class SDM {
     protected SuperDuperMarketDescriptor mySDM;
     protected List<SDMItem> sdmItems;
     protected List<SDMStore> sdmStores;
+    protected Orders orderHistory;
+
+    public Orders getOrderHistory(){
+        if (orderHistory == null)
+            orderHistory = new Orders();
+        return orderHistory;
+    }
+
 
     public String getLoadingErrorMessage() {return loadingErrorMessage;}
     public SuperDuperMarketDescriptor getSuperDuperMarketDescriptor(){return mySDM;}

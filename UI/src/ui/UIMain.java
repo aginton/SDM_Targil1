@@ -2,6 +2,7 @@ package ui;
 
 
 import Orders.Order;
+import Orders.Orders;
 import SDM.SDM;
 import jaxb.schema.generated.SDMItem;
 import jaxb.schema.generated.SDMSell;
@@ -29,6 +30,8 @@ public class UIMain {
         String s = "";
         String xmlFileName = "";
         SDM sdmInstance = new SDM();
+        Orders orders = new Orders();
+
         SuperDuperMarketDescriptor sdmLoaded;
 
         // create an object of Scanner class
@@ -113,9 +116,7 @@ public class UIMain {
     private static void placeAnOrder(SDM sdmInstance) {
         int userInput;
         float amount, cartTotal = 0, deliveryCost = 0;
-        Order order = new Order();
         HashMap<Integer, HashMap<String, Object>> myCart = new HashMap<>();
-        HashMap<String, Object> myOrder = new HashMap<>();
         Scanner in = new Scanner(System.in);
         String input;
 
@@ -130,7 +131,6 @@ public class UIMain {
             return;
 
         storeChoice = listOfStores.get(userInput - 1);
-        myOrder.put("StoreId", storeChoice.getId());
 
         //TODO: Get date/time in more user-friendly way
         Date orderDate = getOrderDateFromUser();
@@ -158,12 +158,15 @@ public class UIMain {
             System.out.println("Total: " + cartTotal+deliveryCost);
             System.out.println("\nCart summary:");
             printCartDetails(myCart);
+            System.out.println("");
 
             input = in.nextLine();
             switch (input.toLowerCase()){
                 case "confirm":
                     System.out.println("Order confirmed! (:");
                     //TODO: Save order somehow
+                    Order order = new Order(storeChoice.getId(), userLocation, orderDate, cartTotal, deliveryCost, myCart);
+                    sdmInstance.getOrderHistory().getOrders().add(order);
                     return;
 
                 case "add":
