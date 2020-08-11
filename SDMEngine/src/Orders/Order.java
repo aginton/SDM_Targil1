@@ -1,35 +1,38 @@
 package Orders;
 
 
+import jaxb.schema.generated.SDMStore;
+
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class Order {
     private static int numOfOrders = 1;
     protected int orderId;
-    protected int storeID;
+//    protected int storeID;
+//    protected String storeName;
     protected List<Integer> userLocation;
     protected Date orderDate;
     protected float cartTotal;
-    protected float deliveryDistance;
-
-
+    protected float deliveryCost;
+    protected SDMStore store;
     protected HashMap<Integer, HashMap<String, Object>> cart;
-
-    protected String dateAndTime;
 
 
     public int getOrderId(){return orderId;}
+    public SDMStore getStore(){return store;}
+//    public String getStoreName(){return storeName;}
+//    public int getStoreId() {return storeID;}
 
-    public int getStoreId() {return storeID;}
-    public void setStoreID(int storeID){this.storeID = storeID;}
+//    public void setStoreID(int storeID){this.storeID = storeID;}
 
-    public float cartTotal() {return cartTotal;}
+    public float getCartTotal() {return cartTotal;}
+    public float getDeliveryCost(){return deliveryCost;}
+
+    public Date getOrderDate(){return orderDate;}
 
 
-    public float getDeliveryDistance(){return deliveryDistance;}
 
     public HashMap<Integer, HashMap<String, Object>> getCart(){
         if (cart == null){
@@ -40,16 +43,17 @@ public class Order {
 
     //TODO: Make a static method that calculates the delivery cost and returns value
 
-    public Order(int storeId, List<Integer> userLocation, Date orderDate, float cartTotal, float deliveryDistance, HashMap<Integer, HashMap<String, Object>> cart){
+    public Order(SDMStore store, List<Integer> userLocation, Date orderDate, float cartTotal, float deliveryDistance, HashMap<Integer, HashMap<String, Object>> cart){
         System.out.println("Inside Order constructor");
         this.orderId = numOfOrders;
         numOfOrders++;
 
-        this.storeID = storeId;
+        //this.storeID = storeId;
+        this.store = store;
         this.userLocation = userLocation;
         this.orderDate = orderDate;
         this.cartTotal = cartTotal;
-        this.deliveryDistance = deliveryDistance;
+        this.deliveryCost = deliveryDistance;
         this.cart = cart;
 
         System.out.println("Successfully created order " + orderId);

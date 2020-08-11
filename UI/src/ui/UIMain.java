@@ -82,6 +82,7 @@ public class UIMain {
                     break;
 
                 case "5":
+                    viewOrderHistory(sdmInstance);
                     break;
 
                 case "6":
@@ -102,6 +103,41 @@ public class UIMain {
 
 
         }
+    }
+
+    private static void viewOrderHistory(SDM sdmInstance) {
+        List<Order> history = sdmInstance.getOrderHistory().getOrders();
+        for (Order order: history){
+            int orderId = order.getOrderId();
+            Date orderDate = order.getOrderDate();
+            int storeId = order.getStore().getId();
+            String storeName = order.getStore().getName();
+            HashMap<Integer, HashMap<String, Object>> cart = order.getCart();
+            float cartTotal = order.getCartTotal();
+            float deliveryCost = order.getDeliveryCost();
+            float total = cartTotal + deliveryCost;
+
+            System.out.println("\norderId: " + orderId +
+                    "\torder Date: " + orderDate +
+                    "\tstoreId: " + storeId+
+                    "\tstoreName: " + storeName+
+                    "\tSubtotal: " + cartTotal+
+                    "\tDelivery: " + deliveryCost+
+                    "\tTotal: " + total);
+
+//            System.out.printf("|%-10s| %-20s| StoreId=%3d %-10s| %-10s| %-15| %-10s\n",
+//                    "orderId",
+//                    "Order date",
+//                    storeId,
+//                    storeName,
+//                    "Subtotal",
+//                    "Delivery",
+//                    "Total Cost"
+//                    );
+
+            printCartDetails(cart);
+        }
+
     }
 
     private static void testThisMethod(SDM sdmInstance) {
@@ -165,7 +201,7 @@ public class UIMain {
                 case "confirm":
                     System.out.println("Order confirmed! (:");
                     //TODO: Save order somehow
-                    Order order = new Order(storeChoice.getId(), userLocation, orderDate, cartTotal, deliveryCost, myCart);
+                    Order order = new Order(storeChoice, userLocation, orderDate, cartTotal, deliveryCost, myCart);
                     sdmInstance.getOrderHistory().getOrders().add(order);
                     return;
 

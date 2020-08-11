@@ -16,7 +16,7 @@ public class Orders {
     }
 
     public List<Order> getOrdersForStore(int storeId){
-        return orders.stream().filter(order->order.getStoreId()==storeId).collect(Collectors.toList());
+        return orders.stream().filter(order->order.getStore().getId()==storeId).collect(Collectors.toList());
     }
 
     public List<Order> getOrdersContainingItem(int itemId){
