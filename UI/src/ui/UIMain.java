@@ -111,25 +111,18 @@ public class UIMain {
     }
 
     private static void placeAnOrder(SDM sdmInstance) {
-        int userInput, i, xpos, ypos;
-        float amount;
-        float cartTotal = 0, deliveryCost = 0;
+        int userInput;
+        float amount, cartTotal = 0, deliveryCost = 0;
         Order order = new Order();
         HashMap<Integer, HashMap<String, Object>> myCart = new HashMap<>();
         HashMap<String, Object> myOrder = new HashMap<>();
-        HashMap<Integer, Float> ordersPerItem = new HashMap<>();
         Scanner in = new Scanner(System.in);
         String input;
 
-        String strItemsToChooseFrom = "";
 
         List<SDMStore> listOfStores = sdmInstance.getListOfSDMStores();
-        List<Integer> listOfStoreIds = sdmInstance.getListOfStoreIds(listOfStores);
-        List<Integer> listOfItemIds = sdmInstance.getListOfItemIds(sdmInstance.getListOfSDMItems());
-        List<List<Integer>> listOfStoreLocations = sdmInstance.getListOfStoreLocations(listOfStores);
         SDMStore storeChoice;
         List<Integer> userLocation = new ArrayList<>();
-        List<Integer> listOfPricedItemIds;
 
         //ask user for Store id
         userInput = getStoreIdFromUser(sdmInstance);
@@ -138,9 +131,8 @@ public class UIMain {
 
         storeChoice = listOfStores.get(userInput - 1);
         myOrder.put("StoreId", storeChoice.getId());
-        listOfPricedItemIds = sdmInstance.getListOfPriceIdsForStore(storeChoice);
 
-        //TODO: Get date/time for order from user
+        //TODO: Get date/time in more user-friendly way
         Date orderDate = getOrderDateFromUser();
         if (orderDate == null)
             return;
@@ -212,11 +204,6 @@ public class UIMain {
                 default:
                     System.out.println("Invalid input! ):");
             }
-
-
-            //https://stackoverflow.com/questions/18280373/iterate-dictionary-in-java
-
-
         }
     }
 
@@ -249,7 +236,6 @@ public class UIMain {
                float amount = (float) v.get("amount");
                float itemTotalCost = (float) v.get("itemTotalCost");
                System.out.printf("\n%-3d| %-15s| unit price=%-3d| %8s: %-5.2f| cost=%-5.2f", k, name, price, pCat, amount, itemTotalCost);
-//               System.out.println(k + "\t"+ name + "\tprice= " + price+ "\t"+pCat + ": " + amount + "\t\t cost= " + itemTotalCost);
            });
        }
     }
@@ -376,42 +362,6 @@ public class UIMain {
         }
     }
 
-    //  https://stackoverflow.com/questions/22936218/how-to-read-comma-separated-integer-inputs-in-java
-//    private static List<Integer> getUserLocation(SDM sdmInstance) {
-//        List<SDMStore> listOfStores = sdmInstance.getListOfSDMStores();
-//        List<List<Integer>> listOfStoreLocations = sdmInstance.getListOfStoreLocations(listOfStores);
-//
-//        List<Integer> res = new ArrayList<>();
-//        int xpos, ypos;
-//
-//        while (true) {
-//            System.out.println("What are you coordinates?");
-//            xpos = getIntFromUser("\nPlease enter your current x-position:");
-//            //System.out.println("\nPlease enter your current y-position:");
-//
-//            if (xpos == -1) {
-//                return Collections.singletonList(-1);
-//            }
-//
-//            ypos = getIntFromUser("\nPlease enter your current y-position:");
-//            if (ypos == -1) {
-//                return Collections.singletonList(-1);
-//            }
-//
-//            res.add(xpos);
-//            res.add(ypos);
-//
-//            if (xpos < 0 || xpos > 50 || ypos < 0 || ypos > 50) {
-//                System.out.println("Error: You entered " + "(" + xpos + ", " + ypos + "), but Coordinates must be in range [0,50]");
-//            } else if (listOfStoreLocations.contains(res))
-//                System.out.println("Error: The location (" + xpos + ", " + ypos + ") is already occupied by a store!");
-//            else
-//                return res;
-//        }
-//    }
-
-
-    //https://stackoverflow.com/questions/52249376/java-how-to-parse-a-coordinate-string-with-multiple-possible-formats-and-conv
     private static List<Integer> getUserLocation(SDM sdmInstance) {
         List<SDMStore> listOfStores = sdmInstance.getListOfSDMStores();
         List<List<Integer>> listOfStoreLocations = sdmInstance.getListOfStoreLocations(listOfStores);
@@ -420,9 +370,6 @@ public class UIMain {
         Scanner src = new Scanner(System.in);
         src.useDelimiter(",");
 
-
-        //https://stackoverflow.com/questions/51221844/how-to-take-input-from-console-in-java-separated-by-comma-and-n
-        //https://stackoverflow.com/questions/5690121/java-read-input
         while (true) {
             try{
                 legalSize = true;
@@ -516,11 +463,6 @@ public class UIMain {
         }
     }
 
-    /**
-     * Input: string prompt message
-     *
-     * @return the total number of fields
-     */
 
     //TODO: Make shorter and simpler
     private static int getIntFromUser(String s) {
