@@ -15,22 +15,22 @@ public class Orders {
         return this.orders;
     }
 
-    public List<Order> getOrdersForStore(int storeId){
-        return orders.stream().filter(order->order.getStore().getId()==storeId).collect(Collectors.toList());
-    }
-
-    public List<Order> getOrdersContainingItem(int itemId){
-        List<Order> res = orders.stream().filter(order->order.getCart().containsKey(itemId)).collect(Collectors.toList());
-
-        return res;
-    }
-
-    public void addOrder(Order order){
-        if (orders == null)
-            orders = new ArrayList<Order>();
-
-        orders.add(order);
-        System.out.println("Order " + order.getOrderId() + " successfully added to Orders!");
-    }
+//    public List<Order> getOrdersForStore(int storeId){
+//        return orders.stream().filter(order->order.getStore().getId()==storeId).collect(Collectors.toList());
+//    }
+//
+//    public List<Order> getOrdersContainingItem(int itemId){
+//        List<Order> res = orders.stream().filter(order->order.getCart().containsKey(itemId)).collect(Collectors.toList());
+//
+//        return res;
+//    }
+//
+//    public void addOrder(Order order){
+//        if (orders == null)
+//            orders = new ArrayList<Order>();
+//
+//        orders.add(order);
+//        System.out.println("Order " + order.getOrderId() + " successfully added to Orders!");
+//    }
 
 }

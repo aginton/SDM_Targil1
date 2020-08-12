@@ -1,6 +1,7 @@
 package Orders;
 
 
+import Store.Store;
 import jaxb.schema.generated.SDMStore;
 
 import java.util.Date;
@@ -16,12 +17,12 @@ public class Order {
     protected Date orderDate;
     protected float cartTotal;
     protected float deliveryCost;
-    protected SDMStore store;
+    protected Store store;
     protected HashMap<Integer, HashMap<String, Object>> cart;
 
 
     public int getOrderId(){return orderId;}
-    public SDMStore getStore(){return store;}
+    public Store getStore(){return store;}
 //    public String getStoreName(){return storeName;}
 //    public int getStoreId() {return storeID;}
 
@@ -43,7 +44,7 @@ public class Order {
 
     //TODO: Make a static method that calculates the delivery cost and returns value
 
-    public Order(SDMStore store, List<Integer> userLocation, Date orderDate, float cartTotal, float deliveryDistance, HashMap<Integer, HashMap<String, Object>> cart){
+    public Order(Store store, List<Integer> userLocation, Date orderDate, float cartTotal, float deliveryDistance, HashMap<Integer, HashMap<String, Object>> cart){
         System.out.println("Inside Order constructor");
         this.orderId = numOfOrders;
         numOfOrders++;

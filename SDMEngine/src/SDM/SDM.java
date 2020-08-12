@@ -1,6 +1,8 @@
 package SDM;
 
+import Item.Item;
 import Orders.Orders;
+import Store.Store;
 import jaxb.schema.generated.*;
 
 import javax.xml.bind.JAXBContext;
@@ -18,11 +20,126 @@ public class SDM {
     protected List<SDMStore> sdmStores;
     protected Orders orderHistory;
 
+    protected List<Store> stores;
+    protected List<Item> items;
+
     public Orders getOrderHistory(){
         if (orderHistory == null)
             orderHistory = new Orders();
         return orderHistory;
     }
+
+    public List<Store> getStores(){return stores;}
+    public List<Item> getItems(){return items;}
+
+
+    /*
+    this function should update mySDM if corresponding file is valid
+     */
+    public boolean tryLoadingSDMObjectFromFile(String fileName){
+        try {
+            boolean res = false;
+            File file = new File(fileName);
+            JAXBContext jaxbContext = JAXBContext.newInstance(SuperDuperMarketDescriptor.class);
+
+            Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
+            SuperDuperMarketDescriptor sdm = (SuperDuperMarketDescriptor) jaxbUnmarshaller.unmarshal(file);
+
+            if (isSDMValidAppWise(sdm)){
+                mySDM = sdm;
+                createStores(sdm);
+                createItems(sdm);
+                sdmItems = getListOfSDMItems();
+                sdmStores = getListOfSDMStores();
+                res = true;
+            }
+
+            return res;
+
+
+        } catch (JAXBException e) {
+            e.printStackTrace();
+            loadingErrorMessage = loadingErrorMessage.concat("Encountered JAXException: SDM from file is not valid");
+            //System.out.println("SDM from file is not valid");
+            return false;
+        }
+    }
+
+    private void createItems(SuperDuperMarketDescriptor sdm) {
+        if (items == null)
+            items = new ArrayList<Item>();
+
+        sdm.getSDMItems().getSDMItem().stream().forEach(item->{
+            items.add(new Item(item));
+        });
+
+        for (Item item: items){
+            List<Store> carryingStores = stores.stream().filter(i-> i.getInventory().containsKey(item.getItemId())).collect(Collectors.toList());
+            float tmpSum = 0;
+
+            for (Store s: carryingStores){
+                item.getStoresSellingItem().add(s);
+                int price = (Integer) s.getInventory().get(item.getItemId()).get("price");
+                tmpSum += price;
+            }
+            item.setAvePrice(tmpSum/carryingStores.size());
+        }
+    }
+
+    public void createStores(SuperDuperMarketDescriptor sdm){
+
+        if (stores == null){
+            stores = new ArrayList<Store>();
+        }
+
+        for (SDMStore store: sdm.getSDMStores().getSDMStore()){
+            List<Integer> storeLoc = new ArrayList<>();
+            storeLoc.add(store.getLocation().getX());
+            storeLoc.add(store.getLocation().getY());
+
+            HashMap<Integer, HashMap<String, Object>> inventory = new HashMap<>();
+
+            for (SDMSell sell: store.getSDMPrices().getSDMSell()){
+                HashMap<String, Object> sellDetails = new HashMap<>();
+                SDMItem matchingItem = sdm.getSDMItems().getSDMItem().stream().filter(item->item.getId()==sell.getItemId()).findFirst().get();
+
+                //matchingItem shouldn't be null in any case
+                if (matchingItem != null){
+                    sellDetails.put("itemName", matchingItem.getName());
+                    sellDetails.put("purchaseCategory", matchingItem.getPurchaseCategory());
+                    sellDetails.put("price", sell.getPrice());
+                    sellDetails.put("amountSold", 0);
+                    inventory.put(sell.getItemId(),sellDetails);
+                }
+            }
+
+            Store newStore = new Store(store.getId(), store.getName(), storeLoc, store.getDeliveryPpk(), inventory);
+            stores.add(newStore);
+        }
+    }
+
+
+    public boolean isSDMValidAppWise(SuperDuperMarketDescriptor sdm) {
+
+        boolean areItemIdsUnique,areStoreIdsUnique,isStoreUsingUniqueItemIds, isStoreUsingExistingItemIds, isEachExistingItemSoldSomewhere, areLocationsLegal;
+
+        List<SDMItem> sdmItems = sdm.getSDMItems().getSDMItem();
+        List<SDMStore> sdmStores = sdm.getSDMStores().getSDMStore();
+
+        //Since we expect no duplicates, we can store Item and Store ids as lists
+        List<Integer> listOfItemIds = getListOfItemIds(sdmItems);
+        List<Integer> listOfStoreIds = getListOfStoreIds(sdmStores);
+
+        areItemIdsUnique = checkListOfIntsUnique(listOfItemIds, "SDM-Items");
+        areStoreIdsUnique = checkListOfIntsUnique(listOfStoreIds, "SDM-Stores");
+        isStoreUsingUniqueItemIds = checkStoreUsesUniqueItemIds(sdmStores);
+        isStoreUsingExistingItemIds = checkItemsSoldExist(sdmStores, listOfItemIds);
+        isEachExistingItemSoldSomewhere = checkEachExistingItemSoldSomewhere(sdmStores, listOfItemIds);
+        areLocationsLegal = checkLocationsAreAllowed(sdmStores);
+
+        return (areItemIdsUnique && areStoreIdsUnique && isStoreUsingExistingItemIds && isStoreUsingUniqueItemIds && isEachExistingItemSoldSomewhere && areLocationsLegal);
+    }
+
 
 
     public String getLoadingErrorMessage() {return loadingErrorMessage;}
@@ -164,67 +281,7 @@ public class SDM {
 
 
 
-    /*
-    this function should update mySDM if corresponding file is valid
-     */
-    public boolean tryLoadingSDMObjectFromFile(String fileName){
-        try {
-            boolean res = false;
-            File file = new File(fileName);
-            JAXBContext jaxbContext = JAXBContext.newInstance(SuperDuperMarketDescriptor.class);
 
-            Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
-            SuperDuperMarketDescriptor sdm = (SuperDuperMarketDescriptor) jaxbUnmarshaller.unmarshal(file);
-
-            if (isSDMValidAppWise(sdm)){
-                mySDM = sdm;
-                sdmItems = getListOfSDMItems();
-                sdmStores = getListOfSDMStores();
-                res = true;
-            }
-
-            return res;
-
-
-        } catch (JAXBException e) {
-            e.printStackTrace();
-            loadingErrorMessage = loadingErrorMessage.concat("Encountered JAXException: SDM from file is not valid");
-            //System.out.println("SDM from file is not valid");
-            return false;
-        }
-    }
-
-
-    public boolean isSDMValidAppWise(SuperDuperMarketDescriptor sdm) {
-
-        boolean areItemIdsUnique,areStoreIdsUnique,isStoreUsingUniqueItemIds, isStoreUsingExistingItemIds, isEachExistingItemSoldSomewhere, areLocationsLegal;
-
-        List<SDMItem> sdmItems = sdm.getSDMItems().getSDMItem();
-        List<SDMStore> sdmStores = sdm.getSDMStores().getSDMStore();
-
-        //Since we expect no duplicates, we can store Item and Store ids as lists
-        List<Integer> listOfItemIds = getListOfItemIds(sdmItems);
-        List<Integer> listOfStoreIds = getListOfStoreIds(sdmStores);
-
-        List<List<Integer>> listOfStoreLocations = getListOfStoreLocations(sdmStores);
-
-        areItemIdsUnique = checkListOfIntsUnique(listOfItemIds, "SDM-Items");
-
-        areStoreIdsUnique = checkListOfIntsUnique(listOfStoreIds, "SDM-Stores");
-
-
-        isStoreUsingUniqueItemIds = checkStoreUsesUniqueItemIds(sdmStores);
-
-
-        isStoreUsingExistingItemIds = checkItemsSoldExist(sdmStores, listOfItemIds);
-
-
-        isEachExistingItemSoldSomewhere = checkEachExistingItemSoldSomewhere(sdmStores, listOfItemIds);
-
-        areLocationsLegal = checkLocationsAreAllowed(sdmStores);
-
-        return (areItemIdsUnique && areStoreIdsUnique && isStoreUsingExistingItemIds && isStoreUsingUniqueItemIds && isEachExistingItemSoldSomewhere && areLocationsLegal);
-    }
 
     public String showStoreInformation(SDMStore store){
         //String res = "";

@@ -1,9 +1,11 @@
 package ui;
 
 
+import Item.Item;
 import Orders.Order;
 import Orders.Orders;
 import SDM.SDM;
+import Store.Store;
 import jaxb.schema.generated.SDMItem;
 import jaxb.schema.generated.SDMSell;
 import jaxb.schema.generated.SDMStore;
@@ -66,27 +68,39 @@ public class UIMain {
                     }
                     break;
 
+                     // print information for stores in system
                 case "2":
                     if (isSDMLoaded) {
-                        printStoreInformation(sdmInstance);
+                        viewAllStoresInSystem(sdmInstance);
+                        //printStoreInformation(sdmInstance);
                     }
                     break;
 
-
+                    // display all items in system
                 case "3":
-
+                    if (isSDMLoaded){
+                        viewAllItemsInSystem(sdmInstance);
+                    }
                     break;
 
+                    //add an order
                 case "4":
-                    placeAnOrder(sdmInstance);
+                    if (isSDMLoaded) {
+                        placeAnOrder(sdmInstance);
+                    }
+
                     break;
 
                 case "5":
-                    viewOrderHistory(sdmInstance);
+                    if (isSDMLoaded){
+                        viewOrderHistory(sdmInstance);
+                    }
                     break;
 
                 case "6":
-                    printDetailsOfSDM(sdmInstance.getSuperDuperMarketDescriptor());
+                    if (isSDMLoaded){
+                        printDetailsOfSDM(sdmInstance.getSuperDuperMarketDescriptor());
+                    }
                     break;
 
                 case "q":
@@ -105,40 +119,85 @@ public class UIMain {
         }
     }
 
+    private static void viewAllItemsInSystem(SDM sdmInstance) {
+        List<Item> items = sdmInstance.getItems();
+        System.out.printf("\n| item-Id | %-15s | Purchase-Category | amount of stores carrying item | ave price | units sold | ", "item-Name");
+        System.out.println("\n---------------------------------------------------------------------------------------------------------------");
+
+        for (Item item: items){
+
+            System.out.printf("|%-9d|%-17s|%-19s|%-32d|%-11.2f|%-12d|\n", item.getItemId(),
+                    item.getItemName(),
+            item.getPurchaseCategory(),
+            item.getStoresSellingItem().size(),
+            item.getAvePrice(),
+            item.getUnitsSold());
+
+        }
+
+    }
+
     private static void viewOrderHistory(SDM sdmInstance) {
         List<Order> history = sdmInstance.getOrderHistory().getOrders();
+        System.out.println("==============================================================================================");
         for (Order order: history){
             int orderId = order.getOrderId();
             Date orderDate = order.getOrderDate();
-            int storeId = order.getStore().getId();
-            String storeName = order.getStore().getName();
+            String date = new SimpleDateFormat("dd/MM\thh:mm").format(orderDate);
+            int storeId = order.getStore().getStoreId();
+            String storeName = order.getStore().getStoreName();
             HashMap<Integer, HashMap<String, Object>> cart = order.getCart();
             float cartTotal = order.getCartTotal();
             float deliveryCost = order.getDeliveryCost();
             float total = cartTotal + deliveryCost;
 
-            System.out.println("\norderId: " + orderId +
-                    "\torder Date: " + orderDate +
-                    "\tstoreId: " + storeId+
-                    "\tstoreName: " + storeName+
-                    "\tSubtotal: " + cartTotal+
-                    "\tDelivery: " + deliveryCost+
-                    "\tTotal: " + total);
-
-//            System.out.printf("|%-10s| %-20s| StoreId=%3d %-10s| %-10s| %-15| %-10s\n",
-//                    "orderId",
-//                    "Order date",
-//                    storeId,
-//                    storeName,
-//                    "Subtotal",
-//                    "Delivery",
-//                    "Total Cost"
-//                    );
-
+            System.out.printf("|Order-id|%-10s|%-5d|%-13s|\n",date, storeId, storeName);
             printCartDetails(cart);
+            System.out.println("\nSubtotal: " + cartTotal);
+            System.out.println("Delivery fee: "+ deliveryCost);
+            System.out.println("Total: " + total);
+            System.out.println("==============================================================================================");
+
         }
 
     }
+
+
+    ////Old version
+//    private static void viewOrderHistory(SDM sdmInstance) {
+//        List<Order> history = sdmInstance.getOrderHistory().getOrders();
+//        for (Order order: history){
+//            int orderId = order.getOrderId();
+//            Date orderDate = order.getOrderDate();
+//            int storeId = order.getStore().getId();
+//            String storeName = order.getStore().getName();
+//            HashMap<Integer, HashMap<String, Object>> cart = order.getCart();
+//            float cartTotal = order.getCartTotal();
+//            float deliveryCost = order.getDeliveryCost();
+//            float total = cartTotal + deliveryCost;
+//
+//            System.out.println("orderId: " + orderId +
+//                    "\torder Date: " + orderDate +
+//                    "\tstoreId: " + storeId+
+//                    "\tstoreName: " + storeName+
+//                    "\tSubtotal: " + cartTotal+
+//                    "\tDelivery: " + deliveryCost+
+//                    "\tTotal: " + total);
+//
+////            System.out.printf("|%-10s| %-20s| StoreId=%3d %-10s| %-10s| %-15| %-10s\n",
+////                    "orderId",
+////                    "Order date",
+////                    storeId,
+////                    storeName,
+////                    "Subtotal",
+////                    "Delivery",
+////                    "Total Cost"
+////                    );
+//
+//            printCartDetails(cart);
+//        }
+//
+//    }
 
     private static void testThisMethod(SDM sdmInstance) {
 
@@ -149,17 +208,17 @@ public class UIMain {
         }
     }
 
+
     private static void placeAnOrder(SDM sdmInstance) {
+        List<Store> listOfStores = sdmInstance.getStores();
+        Store storeChoice;
+        List<Integer> userLocation = new ArrayList<>();
         int userInput;
         float amount, cartTotal = 0, deliveryCost = 0;
         HashMap<Integer, HashMap<String, Object>> myCart = new HashMap<>();
         Scanner in = new Scanner(System.in);
         String input;
 
-
-        List<SDMStore> listOfStores = sdmInstance.getListOfSDMStores();
-        SDMStore storeChoice;
-        List<Integer> userLocation = new ArrayList<>();
 
         //ask user for Store id
         userInput = getStoreIdFromUser(sdmInstance);
@@ -180,14 +239,14 @@ public class UIMain {
             return;
 
         //TODO?: make data types more consistent (use either only doubles or only floats)
-        double distance = getDistance(userLocation, sdmInstance.getStoreLocation(storeChoice));
+        float distance = getDistance(userLocation, storeChoice.getStoreLocation());
 
         while (true) {
             HashMap<String, Object> itemDetails;
 
             System.out.println("\nTo confirm cart purchase, enter 'confirm'. To add an item to your cart, enter 'add'. To cancel order, enter 'Q'");
             System.out.println("=======================================================================");
-            System.out.println("Store: " + storeChoice.getName());
+            System.out.println("Store: " + storeChoice.getStoreName());
             System.out.println("Order Date: " + orderDate);
             System.out.println("My location: (" + userLocation.get(0) + ", " + userLocation.get(1) + ")");
             System.out.println("\nCart subtotal:" + cartTotal);
@@ -200,22 +259,26 @@ public class UIMain {
             switch (input.toLowerCase()){
                 case "confirm":
                     System.out.println("Order confirmed! (:");
-                    //TODO: Save order somehow
                     Order order = new Order(storeChoice, userLocation, orderDate, cartTotal, deliveryCost, myCart);
-                    sdmInstance.getOrderHistory().getOrders().add(order);
+                    storeChoice.getOrders().add(order);
+                    updateUnitsSold(sdmInstance.getItems(), order);
                     return;
 
                 case "add":
                     //ask user to enter ID for item to purchase
+//                    int priceID = getPriceIdFromUser(sdmInstance, storeChoice);
                     int priceID = getPriceIdFromUser(sdmInstance, storeChoice);
                     if (priceID == -1)
                         return;
 
-                    int price = sdmInstance.getPriceForItemAtStore(priceID, storeChoice);
+                    int price = (int) storeChoice.getInventory().get(priceID).get("price");
 
                     //ask user to enter amount
                     SDMItem itemChosen = sdmInstance.getSDMItemById(priceID);
-                    amount = getAmount(itemChosen);
+
+                    amount = getAmount(itemChosen.getPurchaseCategory());
+
+//                    amount = getAmount(itemChosen);
                     cartTotal += (price*amount);
 
                     if (myCart.containsKey(priceID)){
@@ -246,16 +309,134 @@ public class UIMain {
         }
     }
 
-    private static double getDistance(List<Integer> userLocation, List<Integer> storeLocation) {
+    private static void updateUnitsSold(List<Item> items, Order order) {
+        Map<Integer, Integer> weightItems = new HashMap<>();
+        Map<Integer, Integer> quantityItems = new HashMap<>();
+
+        order.getCart().forEach((k,v)->{
+            HashMap<String, Object> i = v;
+            String pcat = (String) i.get("purchaseCategory");
+            if (pcat.equalsIgnoreCase("quantity")){
+                Item item = items.stream().filter(j->j.getItemId() == k).findFirst().get();
+                item.increaseUnitsSold(1);
+            }
+            else if (pcat.equalsIgnoreCase("weight")){
+                Item item = items.stream().filter(j->j.getItemId() == k).findFirst().get();
+
+                //needed to convert float to int
+                int amount = Math.round((float) v.get("amount"));
+                item.increaseUnitsSold(amount);
+            }
+        });
+    }
+
+
+    ///Old version
+//    private static void placeAnOrder(SDM sdmInstance) {
+//        int userInput;
+//        float amount, cartTotal = 0, deliveryCost = 0;
+//        HashMap<Integer, HashMap<String, Object>> myCart = new HashMap<>();
+//        Scanner in = new Scanner(System.in);
+//        String input;
+//
+//
+//        List<SDMStore> listOfStores = sdmInstance.getListOfSDMStores();
+//        SDMStore storeChoice;
+//        List<Integer> userLocation = new ArrayList<>();
+//
+//        //ask user for Store id
+//        userInput = getStoreIdFromUser(sdmInstance);
+//        if (userInput == -1)
+//            return;
+//
+//        storeChoice = listOfStores.get(userInput - 1);
+//
+//        //TODO: Get date/time in more user-friendly way
+//        Date orderDate = getOrderDateFromUser();
+//        if (orderDate == null)
+//            return;
+//        //System.out.println("getOrderDate returned: " + orderDate);
+//
+//        //ask user for their location
+//        userLocation = getUserLocation(sdmInstance);
+//        if (userLocation.contains(-1))
+//            return;
+//
+//        //TODO?: make data types more consistent (use either only doubles or only floats)
+//        double distance = getDistance(userLocation, sdmInstance.getStoreLocation(storeChoice));
+//
+//        while (true) {
+//            HashMap<String, Object> itemDetails;
+//
+//            System.out.println("\nTo confirm cart purchase, enter 'confirm'. To add an item to your cart, enter 'add'. To cancel order, enter 'Q'");
+//            System.out.println("=======================================================================");
+//            System.out.println("Store: " + storeChoice.getName());
+//            System.out.println("Order Date: " + orderDate);
+//            System.out.println("My location: (" + userLocation.get(0) + ", " + userLocation.get(1) + ")");
+//            System.out.println("\nCart subtotal:" + cartTotal);
+//            System.out.println("Total: " + cartTotal+deliveryCost);
+//            System.out.println("\nCart summary:");
+//            printCartDetails(myCart);
+//            System.out.println("");
+//
+//            input = in.nextLine();
+//            switch (input.toLowerCase()){
+//                case "confirm":
+//                    System.out.println("Order confirmed! (:");
+//                    //TODO: Save order somehow
+//                    Order order = new Order(storeChoice, userLocation, orderDate, cartTotal, deliveryCost, myCart);
+//                    sdmInstance.getOrderHistory().getOrders().add(order);
+//                    return;
+//
+//                case "add":
+//                    //ask user to enter ID for item to purchase
+//                    int priceID = getPriceIdFromUser(sdmInstance, storeChoice);
+//                    if (priceID == -1)
+//                        return;
+//
+//                    int price = sdmInstance.getPriceForItemAtStore(priceID, storeChoice);
+//
+//                    //ask user to enter amount
+//                    SDMItem itemChosen = sdmInstance.getSDMItemById(priceID);
+//                    amount = getAmount(itemChosen);
+//                    cartTotal += (price*amount);
+//
+//                    if (myCart.containsKey(priceID)){
+//                        Float oldAmount = (float) myCart.get(priceID).get("amount");
+//                        myCart.get(priceID).put("amount", oldAmount+amount);
+//                        myCart.get(priceID).put("itemTotalCost", (oldAmount+amount)*price);
+//                    }
+//
+//                    //if (!myCart.containsKey(priceID))
+//                    else{
+//                        itemDetails = new HashMap<>();
+//                        itemDetails.put("name", itemChosen.getName());
+//                        itemDetails.put("purchaseCategory", itemChosen.getPurchaseCategory());
+//                        itemDetails.put("amount", amount);
+//                        itemDetails.put("price", price);
+//                        itemDetails.put("itemTotalCost", price*amount);
+//                        myCart.put(priceID, itemDetails);
+//                    }
+//
+//                    break;
+//
+//                case "q":
+//                    return;
+//
+//                default:
+//                    System.out.println("Invalid input! ):");
+//            }
+//        }
+//    }
+
+    private static float getDistance(List<Integer> userLocation, List<Integer> storeLocation) {
         if (userLocation.size() != 2 || storeLocation.size() != 2){
             System.out.println("Error: Input lists must each contain 2 points!");
             return -1;
         }
-
-
         int xDelta = userLocation.get(0) -storeLocation.get(0);
         int yDelta = userLocation.get(1) -storeLocation.get(1);
-        return Math.sqrt((xDelta*xDelta)+(yDelta*yDelta));
+        return (float) Math.sqrt((xDelta*xDelta)+(yDelta*yDelta));
     }
 
     //https://kodejava.org/how-do-i-align-string-print-out-in-left-right-center-alignment/
@@ -263,6 +444,7 @@ public class UIMain {
     //https://www.java67.com/2014/06/how-to-format-float-or-double-number-java-example.html#:~:text=format(%22%25.,float%20data%20type%20in%20Java.
     //https://www.homeandlearn.co.uk/java/java_formatted_strings.html
     //https://stackoverflow.com/questions/15961130/align-printf-output-in-java
+
     private static void printCartDetails(HashMap<Integer, HashMap<String, Object>> myCart) {
 //        System.out.println("Just entered printCartDetails");
 //        System.out.println("Is myCart empty?: " + (myCart==null));
@@ -324,46 +506,89 @@ public class UIMain {
         return parsedDate;
     }
 
-
-    private static int getPriceIdFromUser(SDM sdmInstance, SDMStore storeChoice) {
-        List<Integer> listOfItemIds = sdmInstance.getListOfItemIds(sdmInstance.getListOfSDMItems());
-        List<Integer> listOfPricedItemIds = sdmInstance.getListOfPriceIdsForStore(storeChoice);
+    private static int getPriceIdFromUser(SDM sdm, Store storeChoice) {
+        HashMap<Integer, HashMap<String, Object>> inventory = storeChoice.getInventory();
+        List<Integer> existingItems = sdm.getItems().stream().map(i->i.getItemId()).collect(Collectors.toList());
         String prompt = "Please enter the Id for the item you wish to purchase: ";
-        int priceId;
 
+        prompt = prompt.concat(String.format("\n|%s| %-15s |%s| %-13s |"," item-Id ", "item-Name"," Purchase-Category ", "price"));
+        prompt = prompt.concat("\n----------------------------------------------------------------");
+
+
+        //TODO: maybe change structure of inventory to hold items instead?
         //Create string listing items and their details
-        for (SDMItem item : sdmInstance.getListOfSDMItems()) {
-            prompt = prompt.concat("\n\titemId= " + item.getId() + ", item-Name= " + item.getName() + ", PurchaseCategory= " + item.getPurchaseCategory());
+        for (Item item : sdm.getItems()) {
+            boolean isSoldAtStore = inventory.containsKey(item.getItemId());
 
-            if (listOfPricedItemIds.contains(item.getId())) {
-                int price = sdmInstance.getPriceForItemAtStore(item.getId(), storeChoice);
-                prompt = prompt.concat(", price= " + price);
-            } else {
-                prompt = prompt.concat(", (item not sold at store)");
-            }
+            String s2 = String.format("\n| %-7d | %-15s | %-18s| %-13s |",
+                    item.getItemId(),
+                    item.getItemName(),
+                    item.getPurchaseCategory(),
+                    isSoldAtStore? inventory.get(item.getItemId()).get("price").toString() : "not available"
+                    );
+
+            prompt = prompt.concat(s2);
         }
 
+        System.out.println("");
 
         while (true) {
             //System.out.println(prompt);
-            priceId = getIntFromUser(prompt);
+            int priceId = getIntFromUser(prompt);
 
             if (priceId == -1)
                 return -1;
 
-            if (!listOfItemIds.contains(priceId)) {
+            if (!existingItems.contains(priceId)) {
                 System.out.println("aaaaaaaa");
-                System.out.println("Invalid input: Please enter an id from list of items:");
-            } else if (listOfItemIds.contains(priceId) && !listOfPricedItemIds.contains(priceId)) {
+                System.out.println("Invalid input: No reference found for itemId=" + priceId);
+            } else if (existingItems.contains(priceId) && !inventory.containsKey(priceId)) {
                 System.out.println("The item you selected is not currently available at this store. ");
             } else
                 return priceId;
         }
     }
 
+//    private static int getPriceIdFromUser(SDM sdmInstance, SDMStore storeChoice) {
+//        List<Integer> listOfItemIds = sdmInstance.getListOfItemIds(sdmInstance.getListOfSDMItems());
+//        List<Integer> listOfPricedItemIds = sdmInstance.getListOfPriceIdsForStore(storeChoice);
+//        String prompt = "Please enter the Id for the item you wish to purchase: ";
+//        int priceId;
+//
+//        //Create string listing items and their details
+//        for (SDMItem item : sdmInstance.getListOfSDMItems()) {
+//            prompt = prompt.concat("\n\titemId= " + item.getId() + ", item-Name= " + item.getName() + ", PurchaseCategory= " + item.getPurchaseCategory());
+//
+//            if (listOfPricedItemIds.contains(item.getId())) {
+//                int price = sdmInstance.getPriceForItemAtStore(item.getId(), storeChoice);
+//                prompt = prompt.concat(", price= " + price);
+//            } else {
+//                prompt = prompt.concat(", (item not sold at store)");
+//            }
+//        }
+//
+//
+//        while (true) {
+//            //System.out.println(prompt);
+//            priceId = getIntFromUser(prompt);
+//
+//            if (priceId == -1)
+//                return -1;
+//
+//            if (!listOfItemIds.contains(priceId)) {
+//                System.out.println("aaaaaaaa");
+//                System.out.println("Invalid input: Please enter an id from list of items:");
+//            } else if (listOfItemIds.contains(priceId) && !listOfPricedItemIds.contains(priceId)) {
+//                System.out.println("The item you selected is not currently available at this store. ");
+//            } else
+//                return priceId;
+//        }
+//    }
+
     private static int getStoreIdFromUser(SDM sdmInstance) {
-        List<SDMStore> listOfStores = sdmInstance.getListOfSDMStores();
-        List<Integer> listOfStoreIds = sdmInstance.getListOfStoreIds(listOfStores);
+        List<Store> listOfStores = sdmInstance.getStores();
+        List<Integer> storeIds = listOfStores.stream().map(i->i.getStoreId()).collect(Collectors.toList());
+
         Scanner in = new Scanner(System.in);
         boolean isValidStoreId = false;
 
@@ -372,8 +597,8 @@ public class UIMain {
         //Create prompt message
         String prompt = "\nWhich store would you like to order from? Please enter the store-id from the following options. Enter 'Q' at anytime to cancel order: ";
         int i = 1;
-        for (SDMStore store : listOfStores) {
-            prompt = prompt.concat("\n" + i + ") Store-id= " + store.getId() + ",\tname= " + store.getName() + ",\tPPK= " + store.getDeliveryPpk());
+        for (Store store : listOfStores) {
+            prompt = prompt.concat("\n" + i + ") Store-id= " + store.getStoreId() + ",\tname= " + store.getStoreName() + ",\tPPK= " + store.getDeliveryPpk());
             i++;
         }
 
@@ -384,10 +609,10 @@ public class UIMain {
                     return -1;
 
 //                int num = Integer.parseInt(userInput);
-                if (!listOfStoreIds.contains(userInput))
+                if (!storeIds.contains(userInput))
                     System.out.println("Invalid Input: could not find existing store with id " + userInput);
 
-                else if (listOfStoreIds.contains(userInput))
+                else if (storeIds.contains(userInput))
                     return userInput;
 
             } catch (InputMismatchException e) {
@@ -469,12 +694,11 @@ public class UIMain {
         }
     }
 
-    private static float getAmount(SDMItem itemChosen) {
+    private static float getAmount(String purchaseCat) {
         boolean isValidQuantity = false;
         float res;
         Scanner in = new Scanner(System.in);
         DecimalFormat df;
-        String purchaseCat = itemChosen.getPurchaseCategory();
 
         while (true) {
             try {
@@ -536,13 +760,50 @@ public class UIMain {
         return userInput;
     }
 
+    private static void viewAllStoresInSystem(SDM sdm) {
+        List<Store> stores = sdm.getStores();
+        for (Store store: stores){
+            System.out.println("\n=======================================================================");
+            System.out.printf("| Store-id: %-3d | Store-name: %-10s |",store.getStoreId(), store.getStoreName());
+            viewInventoryForStore(store);
+            viewOrdersForStore(store);
+        }
 
-    private static void printStoreInformation(SDM sdm) {
+    }
 
-        for (SDMStore store : sdm.getListOfSDMStores()) {
-            System.out.println(sdm.showStoreInformation(store));
+    private static void viewOrdersForStore(Store store) {
+        List<Order> orders = store.getOrders();
+        if (orders.isEmpty()){
+            System.out.println("\nNo orders yet for store " + store.getStoreId());
+        } else{
+            System.out.printf("\nOrder history for store %d:\n", store.getStoreId());
+            System.out.println("| Order Date  | tot. num. items in cart | cart subtotal | total | ");
+            System.out.println("---------------------------------------------------------------");
+            store.getOrders().stream().forEach(o -> viewOrderDetails(o));
+            System.out.println("");
         }
     }
+
+    private static void viewOrderDetails(Order o) {
+        String date = new SimpleDateFormat("dd/MM\thh:mm").format(o.getOrderDate());
+
+        System.out.printf("| %-10s | %-23s | %-13.2f | %-5.2f |" , date, "???????????", o.getCartTotal(), o.getCartTotal()+o.getDeliveryCost());
+
+    }
+
+    private static void viewInventoryForStore(Store store) {
+        System.out.println("\n\nInventory:");
+        System.out.printf("| item-Id | %-15s | Purchase-Category | price | amount sold |", "item-Name");
+        System.out.println("\n-----------------------------------------------------------------------");
+        store.getInventory().forEach((k,v)->{
+            String itemName = (String) v.get("itemName");
+            String pCat = (String) v.get("purchaseCategory");
+            int price = (Integer) v.get("price");
+            int amountSold = (Integer) v.get("amountSold");
+            System.out.printf("| %-7d | %-15s | %-18s| %-5d | %-11d |\n",k,itemName, pCat, price, amountSold );
+        });
+    }
+
 
     private static void showPossibleCommands(boolean fileSuccessfullyLoaded) {
         //System.out.println("Press '1' to load a new file, or 'Q' to quit at any time");
@@ -595,35 +856,6 @@ public class UIMain {
         }
     }
 
-
-//    public static String readFilePath(BufferedReader bufferedReader) throws IOException {
-//        boolean isValidPath = false;
-//        String s;
-//        File f;
-//
-//        do {
-//            System.out.println("Please enter a valid file path. Press 'Q' to cancel anytime: ");
-//            s = bufferedReader.readLine();
-//
-//            //System.out.println("Value of s: " + s);
-//
-//            if (s.equalsIgnoreCase("c")){
-//                return "";
-//            }
-//
-//            else if (s.length() <= 3 || !s.substring(s.length() - 3).toLowerCase().equals("xml")){
-//                System.out.println("Error: Invalid Path. Please enter full path to XML file");
-//            }
-//
-//            else{
-//                f = new File(s);
-//
-//                if (f.exists())
-//                    isValidPath = true;
-//            }
-//        } while (!isValidPath);
-//        return s;
-//    }
 
     private static void printDetailsOfSDM(SuperDuperMarketDescriptor sdm) {
         List<SDMItem> sdmItems = sdm.getSDMItems().getSDMItem();
