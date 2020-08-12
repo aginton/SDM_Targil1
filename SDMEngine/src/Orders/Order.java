@@ -18,7 +18,9 @@ public class Order {
     protected float cartTotal;
     protected float deliveryCost;
     protected Store store;
+    protected int numItemsInCart;
     protected HashMap<Integer, HashMap<String, Object>> cart;
+    protected Cart orderCart;
 
 
     public int getOrderId(){return orderId;}
@@ -28,6 +30,7 @@ public class Order {
 
 //    public void setStoreID(int storeID){this.storeID = storeID;}
 
+    public int getNumItemsInCart(){return numItemsInCart;}
     public float getCartTotal() {return cartTotal;}
     public float getDeliveryCost(){return deliveryCost;}
 
@@ -42,9 +45,17 @@ public class Order {
         return cart;
     }
 
-    //TODO: Make a static method that calculates the delivery cost and returns value
+    public Order(Store store, List<Integer> userLocation, Date orderDate,float deliveryDistance, Cart c){
+        this.store = store;
+        this.userLocation = userLocation;
+        this.orderDate = orderDate;
+        this.cartTotal = cartTotal;
+        this.deliveryCost = deliveryDistance;
+    }
 
-    public Order(Store store, List<Integer> userLocation, Date orderDate, float cartTotal, float deliveryDistance, HashMap<Integer, HashMap<String, Object>> cart){
+
+    //TODO: Make a static method that calculates the delivery cost and returns value
+    public Order(Store store, List<Integer> userLocation, Date orderDate, float cartTotal, float deliveryDistance, HashMap<Integer, HashMap<String, Object>> cart, int numItemsInCart){
         System.out.println("Inside Order constructor");
         this.orderId = numOfOrders;
         numOfOrders++;
@@ -56,6 +67,7 @@ public class Order {
         this.cartTotal = cartTotal;
         this.deliveryCost = deliveryDistance;
         this.cart = cart;
+        this.numItemsInCart = numItemsInCart;
 
         System.out.println("Successfully created order " + orderId);
     }
