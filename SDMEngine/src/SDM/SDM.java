@@ -1,7 +1,10 @@
 package SDM;
 
+import Inventory.Inventory;
+import Inventory.InventoryItem;
 import Item.Item;
 import Orders.Orders;
+import Orders.Order;
 import Store.Store;
 import jaxb.schema.generated.*;
 
@@ -10,27 +13,24 @@ import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import java.io.File;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class SDM {
 
     protected String loadingErrorMessage="";
     protected SuperDuperMarketDescriptor mySDM;
     protected List<SDMItem> sdmItems;
-    protected List<SDMStore> sdmStores;
+    //protected List<SDMStore> sdmStores;
+    protected Inventory inventory;
     protected Orders orderHistory;
 
     protected List<Store> stores;
     protected List<Item> items;
 
-    public Orders getOrderHistory(){
-        if (orderHistory == null)
-            orderHistory = new Orders();
-        return orderHistory;
-    }
+    public Orders getOrderHistory(){ return orderHistory; }
 
     public List<Store> getStores(){return stores;}
     public List<Item> getItems(){return items;}
+    public Inventory getInventory(){return inventory;}
 
 
     /*
@@ -47,15 +47,22 @@ public class SDM {
 
             if (isSDMValidAppWise(sdm)){
                 mySDM = sdm;
+                //First create each inventory item
+                System.out.println("About to create inventory");
+                createInventory(sdm);
+                System.out.println("\nAll inventory items created!\n\n");
+
+                System.out.println("About to create stores");
                 createStores(sdm);
-                createItems(sdm);
-                sdmItems = getListOfSDMItems();
-                sdmStores = getListOfSDMStores();
+                System.out.println("\nAll stores created!\n\n");
+                inventory.getListInventoryItems().stream().forEach(i->i.updateAvePrice());
+                orderHistory = new Orders();
+//                sdmItems = getListOfSDMItems();
+//                sdmStores = getListOfSDMStores();
                 res = true;
             }
 
             return res;
-
 
         } catch (JAXBException e) {
             e.printStackTrace();
@@ -65,29 +72,30 @@ public class SDM {
         }
     }
 
-    private void createItems(SuperDuperMarketDescriptor sdm) {
-        if (items == null)
-            items = new ArrayList<Item>();
 
-        sdm.getSDMItems().getSDMItem().stream().forEach(item->{
-            items.add(new Item(item));
-        });
+    private void createInventory(SuperDuperMarketDescriptor sdm) {
+        if (inventory == null)
+            inventory = new Inventory();
 
-        for (Item item: items){
-            List<Store> carryingStores = stores.stream().filter(i-> i.getInventory().containsKey(item.getItemId())).collect(Collectors.toList());
-            float tmpSum = 0;
-
-            for (Store s: carryingStores){
-                item.getStoresSellingItem().add(s);
-                int price = (Integer) s.getInventory().get(item.getItemId()).get("price");
-                tmpSum += price;
-            }
-            item.setAvePrice(tmpSum/carryingStores.size());
+        for (SDMItem sdmItem: sdm.getSDMItems().getSDMItem()){
+            InventoryItem item = new InventoryItem(sdmItem);
+            inventory.addNewItemToInventory(item);
         }
+
+//        for (Item item: items){
+//            List<Store> carryingStores = stores.stream().filter(i-> i.getInventory().containsKey(item.getItemId())).collect(Collectors.toList());
+//            float tmpSum = 0;
+//
+//            for (Store s: carryingStores){
+//                item.getStoresSellingItem().add(s);
+//                int price = (Integer) s.getInventory().get(item.getItemId()).get("price");
+//                tmpSum += price;
+//            }
+//            item.setAvePrice(tmpSum/carryingStores.size());
+        //}
     }
 
     public void createStores(SuperDuperMarketDescriptor sdm){
-
         if (stores == null){
             stores = new ArrayList<Store>();
         }
@@ -97,23 +105,18 @@ public class SDM {
             storeLoc.add(store.getLocation().getX());
             storeLoc.add(store.getLocation().getY());
 
-            HashMap<Integer, HashMap<String, Object>> inventory = new HashMap<>();
+            Store newStore = new Store(store, storeLoc, store.getDeliveryPpk());
+
+            List<InventoryItem> newStoreInventory = new ArrayList<InventoryItem>();
 
             for (SDMSell sell: store.getSDMPrices().getSDMSell()){
-                HashMap<String, Object> sellDetails = new HashMap<>();
-                SDMItem matchingItem = sdm.getSDMItems().getSDMItem().stream().filter(item->item.getId()==sell.getItemId()).findFirst().get();
-
-                //matchingItem shouldn't be null in any case
-                if (matchingItem != null){
-                    sellDetails.put("itemName", matchingItem.getName());
-                    sellDetails.put("purchaseCategory", matchingItem.getPurchaseCategory());
-                    sellDetails.put("price", sell.getPrice());
-                    sellDetails.put("amountSold", 0);
-                    inventory.put(sell.getItemId(),sellDetails);
+                InventoryItem itemToAdd = inventory.getListInventoryItems().stream().filter(i->i.getInventoryItemId()==sell.getItemId()).findFirst().get();
+                if (itemToAdd != null){
+                    itemToAdd.addCarryingStore(newStore);
+                    newStoreInventory.add(itemToAdd);
                 }
             }
-
-            Store newStore = new Store(store.getId(), store.getName(), storeLoc, store.getDeliveryPpk(), inventory);
+            newStore.setStoreInventory(newStoreInventory);
             stores.add(newStore);
         }
     }
@@ -413,4 +416,15 @@ public class SDM {
         return res;
     }
 
+    public void addNewOrder(Store storeChoice, Order order) {
+        System.out.println("About to add order to storeChoice");
+        storeChoice.addOrder(order);
+        System.out.println("Successfully added order to storeChoice!\n");
+
+        System.out.println("About to add order to orderHistory");
+        orderHistory.addOrder(order);
+
+        inventory.updateSalesMap(order.getCartForThisOrder().getCart());
+        System.out.println("Successfully added order to orderHistory!\n");
+    }
 }

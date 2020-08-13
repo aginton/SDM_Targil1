@@ -1,9 +1,13 @@
 package ui;
 
 
+import Inventory.Inventory;
+import Inventory.InventoryItem;
 import Item.Item;
 import Orders.Order;
 import Orders.Orders;
+import Orders.Cart;
+import Orders.CartItem;
 import SDM.SDM;
 import Store.Store;
 import jaxb.schema.generated.SDMItem;
@@ -120,21 +124,23 @@ public class UIMain {
     }
 
     private static void viewAllItemsInSystem(SDM sdmInstance) {
+        Inventory inventory = sdmInstance.getInventory();
+
         List<Item> items = sdmInstance.getItems();
         System.out.printf("\n| item-Id | %-15s | Purchase-Category | amount of stores carrying item | ave price | units sold | ", "item-Name");
         System.out.println("\n---------------------------------------------------------------------------------------------------------------");
 
-        for (Item item: items){
 
-            System.out.printf("|%-9d|%-17s|%-19s|%-32d|%-11.2f|%-12d|\n", item.getItemId(),
+        for (InventoryItem item: inventory.getListInventoryItems()){
+
+
+            System.out.printf("|%-9d|%-17s|%-19s|%-32d|%-11d|%-12d|\n", item.getInventoryItemId(),
                     item.getItemName(),
-            item.getPurchaseCategory(),
-            item.getStoresSellingItem().size(),
-            item.getAvePrice(),
-            item.getUnitsSold());
-
+                    item.getPurchaseCategory(),
+                    item.getStoresCarryingItem().size(),
+                    item.getAvePrice(),
+                    item.getAmountSold());
         }
-
     }
 
     private static void viewOrderHistory(SDM sdmInstance) {
@@ -146,58 +152,23 @@ public class UIMain {
             String date = new SimpleDateFormat("dd/MM\thh:mm").format(orderDate);
             int storeId = order.getStore().getStoreId();
             String storeName = order.getStore().getStoreName();
-            HashMap<Integer, HashMap<String, Object>> cart = order.getCart();
-            float cartTotal = order.getCartTotal();
+            //HashMap<Integer, HashMap<String, Object>> cart = order.getCartForThisOrder();
             float deliveryCost = order.getDeliveryCost();
+            Cart cart = order.getCartForThisOrder();
+            float cartTotal = cart.getCartTotalPrice();
             float total = cartTotal + deliveryCost;
 
-            System.out.printf("|Order-id|%-10s|%-5d|%-13s|\n",date, storeId, storeName);
+            System.out.printf("| Order-id: %d | %-10s | Store-Id: %-5d | %-13s |\n",orderId,date, storeId, storeName);
             printCartDetails(cart);
-            System.out.println("\nSubtotal: " + cartTotal);
-            System.out.println("Delivery fee: "+ deliveryCost);
-            System.out.println("Total: " + total);
+            System.out.println("\n\nSubtotal: " + cartTotal);
+            System.out.printf("Delivery fee: %.2f", deliveryCost);
+            System.out.printf("Total: %.2f", total);
             System.out.println("==============================================================================================");
 
         }
 
     }
 
-
-    ////Old version
-//    private static void viewOrderHistory(SDM sdmInstance) {
-//        List<Order> history = sdmInstance.getOrderHistory().getOrders();
-//        for (Order order: history){
-//            int orderId = order.getOrderId();
-//            Date orderDate = order.getOrderDate();
-//            int storeId = order.getStore().getId();
-//            String storeName = order.getStore().getName();
-//            HashMap<Integer, HashMap<String, Object>> cart = order.getCart();
-//            float cartTotal = order.getCartTotal();
-//            float deliveryCost = order.getDeliveryCost();
-//            float total = cartTotal + deliveryCost;
-//
-//            System.out.println("orderId: " + orderId +
-//                    "\torder Date: " + orderDate +
-//                    "\tstoreId: " + storeId+
-//                    "\tstoreName: " + storeName+
-//                    "\tSubtotal: " + cartTotal+
-//                    "\tDelivery: " + deliveryCost+
-//                    "\tTotal: " + total);
-//
-////            System.out.printf("|%-10s| %-20s| StoreId=%3d %-10s| %-10s| %-15| %-10s\n",
-////                    "orderId",
-////                    "Order date",
-////                    storeId,
-////                    storeName,
-////                    "Subtotal",
-////                    "Delivery",
-////                    "Total Cost"
-////                    );
-//
-//            printCartDetails(cart);
-//        }
-//
-//    }
 
     private static void testThisMethod(SDM sdmInstance) {
 
@@ -215,11 +186,10 @@ public class UIMain {
         List<Integer> userLocation = new ArrayList<>();
         int userInput;
         int totalAmount = 0;
-        float amount, cartTotal = 0, deliveryCost = 0;
-        HashMap<Integer, HashMap<String, Object>> myCart = new HashMap<>();
+        float amount;
+        Cart cart = new Cart();
         Scanner in = new Scanner(System.in);
         String input;
-
 
         //ask user for Store id
         userInput = getStoreIdFromUser(sdmInstance);
@@ -232,7 +202,6 @@ public class UIMain {
         Date orderDate = getOrderDateFromUser();
         if (orderDate == null)
             return;
-        //System.out.println("getOrderDate returned: " + orderDate);
 
         //ask user for their location
         userLocation = getUserLocation(sdmInstance);
@@ -241,69 +210,47 @@ public class UIMain {
 
         //TODO?: make data types more consistent (use either only doubles or only floats)
         float distance = getDistance(userLocation, storeChoice.getStoreLocation());
+        float deliveryCost = distance*storeChoice.getDeliveryPpk();
 
         while (true) {
-            HashMap<String, Object> itemDetails;
-
             System.out.println("\nTo confirm cart purchase, enter 'confirm'. To add an item to your cart, enter 'add'. To cancel order, enter 'Q'");
             System.out.println("=======================================================================");
             System.out.println("Store: " + storeChoice.getStoreName());
             System.out.println("Order Date: " + orderDate);
             System.out.println("My location: (" + userLocation.get(0) + ", " + userLocation.get(1) + ")");
-            System.out.println("\nCart subtotal:" + cartTotal);
-            System.out.println("Total: " + cartTotal+deliveryCost);
+            System.out.println("Delivery fee: " + deliveryCost);
             System.out.println("\nCart summary:");
-            printCartDetails(myCart);
+            printCartDetails(cart);
+            System.out.println("\nCart subtotal:" + cart.getCartTotalPrice());
             System.out.println("");
 
             input = in.nextLine();
             switch (input.toLowerCase()){
                 case "confirm":
                     System.out.println("Order confirmed! (:");
-                    Order order = new Order(storeChoice, userLocation, orderDate, cartTotal, deliveryCost, myCart, totalAmount);
-//                    storeChoice.getOrders().add(order);
-                    storeChoice.addOrder(order);
-                    updateUnitsSold(sdmInstance.getItems(), order);
+
+                    Order order = new Order(storeChoice, userLocation, orderDate, deliveryCost, cart);
+                    sdmInstance.addNewOrder(storeChoice, order);
+                    //TODO: Implement updateUnitsSold
+                    //updateUnitsSold(sdmInstance.getItems(), order);
                     return;
 
                 case "add":
                     //ask user to enter ID for item to purchase
-//                    int priceID = getPriceIdFromUser(sdmInstance, storeChoice);
                     int priceID = getPriceIdFromUser(sdmInstance, storeChoice);
+
                     if (priceID == -1)
                         return;
 
-                    int price = (int) storeChoice.getInventory().get(priceID).get("price");
+                    //int price = (int) storeChoice.getInventory().get(priceID).get("price");
+                    int price = storeChoice.getMapItemToPrices().get(priceID);
 
                     //ask user to enter amount
-                    SDMItem itemChosen = sdmInstance.getSDMItemById(priceID);
-
+                    InventoryItem itemChosen = storeChoice.getInventoryItemById(priceID);
+                    //SDMItem itemChosen = sdmInstance.getSDMItemById(priceID);
                     amount = getAmount(itemChosen.getPurchaseCategory());
-
-                    if (itemChosen.getPurchaseCategory().equalsIgnoreCase("quantity"))
-                        totalAmount += (int) Math.round(amount);
-
-                    if (itemChosen.getPurchaseCategory().equalsIgnoreCase("weight"))
-                        totalAmount++;
-
-                    cartTotal += (price*amount);
-
-                    if (myCart.containsKey(priceID)){
-                        Float oldAmount = (float) myCart.get(priceID).get("amount");
-                        myCart.get(priceID).put("amount", oldAmount+amount);
-                        myCart.get(priceID).put("itemTotalCost", (oldAmount+amount)*price);
-                    }
-
-                    //if (!myCart.containsKey(priceID))
-                    else{
-                        itemDetails = new HashMap<>();
-                        itemDetails.put("name", itemChosen.getName());
-                        itemDetails.put("purchaseCategory", itemChosen.getPurchaseCategory());
-                        itemDetails.put("amount", amount);
-                        itemDetails.put("price", price);
-                        itemDetails.put("itemTotalCost", price*amount);
-                        myCart.put(priceID, itemDetails);
-                    }
+                    CartItem cartItem = new CartItem(itemChosen, amount, price);
+                    cart.add(cartItem);
 
                     break;
 
@@ -316,25 +263,14 @@ public class UIMain {
         }
     }
 
+
+
+
     private static void updateUnitsSold(List<Item> items, Order order) {
         Map<Integer, Integer> weightItems = new HashMap<>();
         Map<Integer, Integer> quantityItems = new HashMap<>();
 
-        order.getCart().forEach((k,v)->{
-            HashMap<String, Object> i = v;
-            String pcat = (String) i.get("purchaseCategory");
-            if (pcat.equalsIgnoreCase("quantity")){
-                Item item = items.stream().filter(j->j.getItemId() == k).findFirst().get();
-                item.increaseUnitsSold(1);
-            }
-            else if (pcat.equalsIgnoreCase("weight")){
-                Item item = items.stream().filter(j->j.getItemId() == k).findFirst().get();
 
-                //needed to convert float to int
-                int amount = Math.round((float) v.get("amount"));
-                item.increaseUnitsSold(amount);
-            }
-        });
     }
 
 
@@ -354,21 +290,23 @@ public class UIMain {
     //https://www.homeandlearn.co.uk/java/java_formatted_strings.html
     //https://stackoverflow.com/questions/15961130/align-printf-output-in-java
 
-    private static void printCartDetails(HashMap<Integer, HashMap<String, Object>> myCart) {
+
+    private static void printCartDetails(Cart cart) {
 //        System.out.println("Just entered printCartDetails");
 //        System.out.println("Is myCart empty?: " + (myCart==null));
 
-       if (myCart != null){
-           myCart.forEach((k,v)->{
-               String name = (String) v.get("name");
-               String pCat = (String) v.get("purchaseCategory");
-               int price = (int) v.get("price");
-               float amount = (float) v.get("amount");
-               float itemTotalCost = (float) v.get("itemTotalCost");
-               System.out.printf("\n%-3d| %-15s| unit price=%-3d| %8s: %-5.2f| cost=%-5.2f", k, name, price, pCat, amount, itemTotalCost);
-           });
-       }
+        if (cart != null){
+            cart.getCart().forEach((k,v)->{
+                String name = v.getItemName();
+                String pCat = v.getPurchaseCategory();
+                int price = v.getPrice();
+                float amount = v.getAmount();
+                float itemTotalCost = price*amount;
+                System.out.printf("\n%-3d| %-15s| unit price=%-3d| %8s: %-5.2f| cost=%-5.2f", k, name, price, pCat, amount, itemTotalCost);
+            });
+        }
     }
+
 
     private static Date getOrderDateFromUser() {
 
@@ -415,9 +353,15 @@ public class UIMain {
         return parsedDate;
     }
 
+
     private static int getPriceIdFromUser(SDM sdm, Store storeChoice) {
-        HashMap<Integer, HashMap<String, Object>> inventory = storeChoice.getInventory();
-        List<Integer> existingItems = sdm.getItems().stream().map(i->i.getItemId()).collect(Collectors.toList());
+        List<InventoryItem> fullInventory = sdm.getInventory().getListInventoryItems();
+        List<InventoryItem> storeInventory = storeChoice.getInventoryItems();
+
+
+        List<Integer> existingItems = fullInventory.stream().map(i-> i.getInventoryItemId()).collect(Collectors.toList());
+        List<Integer> storeItemIds = storeInventory.stream().map(i-> i.getInventoryItemId()).collect(Collectors.toList());
+
         String prompt = "Please enter the Id for the item you wish to purchase: ";
 
         prompt = prompt.concat(String.format("\n|%s| %-15s |%s| %-13s |"," item-Id ", "item-Name"," Purchase-Category ", "price"));
@@ -426,14 +370,14 @@ public class UIMain {
 
         //TODO: maybe change structure of inventory to hold items instead?
         //Create string listing items and their details
-        for (Item item : sdm.getItems()) {
-            boolean isSoldAtStore = inventory.containsKey(item.getItemId());
+        for (InventoryItem item : fullInventory) {
+            boolean isSoldAtStore = storeInventory.contains(item);
 
             String s2 = String.format("\n| %-7d | %-15s | %-18s| %-13s |",
-                    item.getItemId(),
+                    item.getInventoryItemId(),
                     item.getItemName(),
                     item.getPurchaseCategory(),
-                    isSoldAtStore? inventory.get(item.getItemId()).get("price").toString() : "not available"
+                    isSoldAtStore? storeChoice.getMapItemToPrices().get(item.getInventoryItemId()).toString() : "not available"
                     );
 
             prompt = prompt.concat(s2);
@@ -450,7 +394,7 @@ public class UIMain {
             if (!existingItems.contains(priceId)) {
                 System.out.println("aaaaaaaa");
                 System.out.println("Invalid input: No reference found for itemId=" + priceId);
-            } else if (existingItems.contains(priceId) && !inventory.containsKey(priceId)) {
+            } else if (existingItems.contains(priceId) && !storeItemIds.contains(priceId)) {
                 System.out.println("The item you selected is not currently available at this store. ");
             } else
                 return priceId;
@@ -663,15 +607,24 @@ public class UIMain {
     }
 
     private static void viewInventoryForStore(Store store) {
+        List<InventoryItem> storeInventory = store.getInventoryItems();
         System.out.println("\n\nInventory:");
         System.out.printf("| item-Id | %-15s | Purchase-Category | price | amount sold |", "item-Name");
         System.out.println("\n-----------------------------------------------------------------------");
-        store.getInventory().forEach((k,v)->{
-            String itemName = (String) v.get("itemName");
-            String pCat = (String) v.get("purchaseCategory");
-            int price = (Integer) v.get("price");
-            int amountSold = (Integer) v.get("amountSold");
-            System.out.printf("| %-7d | %-15s | %-18s| %-5d | %-11d |\n",k,itemName, pCat, price, amountSold );
+        storeInventory.forEach(item->{
+            int id = item.getInventoryItemId();
+            int price = store.getMapItemToPrices().get(id);
+            float amountSold = store.getMapItemsToAmountSold().get(id);
+            String s = String.format("%.2f", amountSold);
+            if (item.getPurchaseCategory().equalsIgnoreCase("weight"))
+                s = s.concat( " kgs");
+            else if (item.getPurchaseCategory().equalsIgnoreCase("quantity"))
+                s = s.concat( " pckgs");
+
+
+            System.out.printf("| %-7d | %-15s | %-18s| %-5d | %-11s |\n",id,item.getItemName(), item.getPurchaseCategory(),
+                    price, s);
+
         });
     }
 

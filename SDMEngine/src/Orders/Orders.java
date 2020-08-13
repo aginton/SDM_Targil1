@@ -25,12 +25,12 @@ public class Orders {
 //        return res;
 //    }
 //
-//    public void addOrder(Order order){
-//        if (orders == null)
-//            orders = new ArrayList<Order>();
-//
-//        orders.add(order);
-//        System.out.println("Order " + order.getOrderId() + " successfully added to Orders!");
-//    }
+    public void addOrder(Order order){
+        if (orders == null)
+            orders = new ArrayList<Order>();
+
+        orders.add(order);
+        System.out.println("Order " + order.getOrderId() + " successfully added to Orders!");
+    }
 
 }
