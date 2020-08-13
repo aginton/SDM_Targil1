@@ -2,7 +2,6 @@ package SDM;
 
 import Inventory.Inventory;
 import Inventory.InventoryItem;
-//import Item.Item;
 import Orders.Orders;
 import Orders.Order;
 import Store.Store;
@@ -19,20 +18,13 @@ public class SDM {
     protected String loadingErrorMessage="";
     protected SuperDuperMarketDescriptor mySDM;
 
-    ////////////////////////////////////////////////
-    // Used for validation part
     protected List<Store> stores;
     public List<Store> getStores(){return stores;}
-    //
-//    protected List<Item> items;
-//    public List<Item> getItems(){return items;}
-    /////////////////////////////////////
 
-
-    /////////////////////////////////////////////////////////////////////////////////
     // inventory and orderHistory are only created after validation
     protected Inventory inventory;
     protected Orders orderHistory;
+
 
 
     public Orders getOrderHistory(){ return orderHistory; }
