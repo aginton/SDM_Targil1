@@ -3,7 +3,7 @@ package ui;
 
 import Inventory.Inventory;
 import Inventory.InventoryItem;
-import Item.Item;
+//import Item.Item;
 import Orders.Order;
 import Orders.Orders;
 import Orders.Cart;
@@ -15,7 +15,6 @@ import jaxb.schema.generated.SDMSell;
 import jaxb.schema.generated.SDMStore;
 import jaxb.schema.generated.SuperDuperMarketDescriptor;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -32,11 +31,7 @@ public class UIMain {
         boolean fileExists = false;
         boolean isSDMLoaded = false;
         boolean wantsToQuit = false;
-        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(System.in));
-        String s = "";
-        String xmlFileName = "";
         SDM sdmInstance = new SDM();
-        Orders orders = new Orders();
 
         SuperDuperMarketDescriptor sdmLoaded;
 
@@ -55,12 +50,8 @@ public class UIMain {
 
                 case "1":
                     String tmpString = readFilePath();
-//                    String tmpString = readFilePath(bufferedReader);
 
                     if (!tmpString.equalsIgnoreCase("q")) {
-                        //SuperDuperMarketDescriptor dummySDM;
-                        //System.out.println("User entered path: " + tmpString);
-
                         if (sdmInstance.tryLoadingSDMObjectFromFile(tmpString)) {
                             System.out.println("SDM-File loaded successfully!");
                             isSDMLoaded = true;
@@ -112,7 +103,7 @@ public class UIMain {
                     return;
 
                 case "9":
-                    testThisMethod(sdmInstance);
+                    //testThisMethod(sdmInstance);
                     break;
 
                 default:
@@ -126,7 +117,7 @@ public class UIMain {
     private static void viewAllItemsInSystem(SDM sdmInstance) {
         Inventory inventory = sdmInstance.getInventory();
 
-        List<Item> items = sdmInstance.getItems();
+        //List<Item> items = sdmInstance.getItems();
         System.out.printf("\n| item-Id | %-15s | Purchase-Category | amount of stores carrying item | ave price | units sold | ", "item-Name");
         System.out.println("\n---------------------------------------------------------------------------------------------------------------");
 
@@ -152,7 +143,6 @@ public class UIMain {
             String date = new SimpleDateFormat("dd/MM\thh:mm").format(orderDate);
             int storeId = order.getStore().getStoreId();
             String storeName = order.getStore().getStoreName();
-            //HashMap<Integer, HashMap<String, Object>> cart = order.getCartForThisOrder();
             float deliveryCost = order.getDeliveryCost();
             Cart cart = order.getCartForThisOrder();
             float cartTotal = cart.getCartTotalPrice();
@@ -169,15 +159,15 @@ public class UIMain {
 
     }
 
-
-    private static void testThisMethod(SDM sdmInstance) {
-
-        for (SDMItem i : sdmInstance.getListOfSDMItems()) {
-            Map<Integer, Integer> itemPrices = sdmInstance.getMapForStoresThatSellItem(i.getId());
-
-            itemPrices.forEach((k, v) -> System.out.println("Price at storeId= " + k + ": " + v));
-        }
-    }
+//
+//    private static void testThisMethod(SDM sdmInstance) {
+//
+//        for (SDMItem i : sdmInstance.getListOfSDMItems()) {
+//            Map<Integer, Integer> itemPrices = sdmInstance.getMapForStoresThatSellItem(i.getId());
+//
+//            itemPrices.forEach((k, v) -> System.out.println("Price at storeId= " + k + ": " + v));
+//        }
+//    }
 
 
     private static void placeAnOrder(SDM sdmInstance) {
@@ -185,7 +175,6 @@ public class UIMain {
         Store storeChoice;
         List<Integer> userLocation = new ArrayList<>();
         int userInput;
-        int totalAmount = 0;
         float amount;
         Cart cart = new Cart();
         Scanner in = new Scanner(System.in);
@@ -208,7 +197,6 @@ public class UIMain {
         if (userLocation.contains(-1))
             return;
 
-        //TODO?: make data types more consistent (use either only doubles or only floats)
         float distance = getDistance(userLocation, storeChoice.getStoreLocation());
         float deliveryCost = distance*storeChoice.getDeliveryPpk();
 
@@ -231,8 +219,6 @@ public class UIMain {
 
                     Order order = new Order(storeChoice, userLocation, orderDate, deliveryCost, cart);
                     sdmInstance.addNewOrder(storeChoice, order);
-                    //TODO: Implement updateUnitsSold
-                    //updateUnitsSold(sdmInstance.getItems(), order);
                     return;
 
                 case "add":
@@ -242,12 +228,11 @@ public class UIMain {
                     if (priceID == -1)
                         return;
 
-                    //int price = (int) storeChoice.getInventory().get(priceID).get("price");
                     int price = storeChoice.getMapItemToPrices().get(priceID);
 
                     //ask user to enter amount
                     InventoryItem itemChosen = storeChoice.getInventoryItemById(priceID);
-                    //SDMItem itemChosen = sdmInstance.getSDMItemById(priceID);
+
                     amount = getAmount(itemChosen.getPurchaseCategory());
                     CartItem cartItem = new CartItem(itemChosen, amount, price);
                     cart.add(cartItem);
@@ -261,16 +246,6 @@ public class UIMain {
                     System.out.println("Invalid input! ):");
             }
         }
-    }
-
-
-
-
-    private static void updateUnitsSold(List<Item> items, Order order) {
-        Map<Integer, Integer> weightItems = new HashMap<>();
-        Map<Integer, Integer> quantityItems = new HashMap<>();
-
-
     }
 
 
@@ -432,11 +407,9 @@ public class UIMain {
 
             } catch (InputMismatchException e) {
                 System.out.println("Invalid input!");
-                //in.nextLine();
             } catch (NumberFormatException nfe) {
                 System.out.println("xxxxxxxxxxxxxxxxxxxxxx");
                 System.out.println(prompt);
-                //in.nextLine();
             }
         }
     }
@@ -564,7 +537,6 @@ public class UIMain {
                 break;
             } catch (InputMismatchException e) {
                 System.out.println("Invalid input!");
-                //in.nextLine();
             } catch (NumberFormatException nfe) {
                 if (!comingFromCancel) {
                     System.out.println("Invalid input: Please only enter whole numbers, or 'Q' to quit");
@@ -695,7 +667,6 @@ public class UIMain {
             String loc = "[" + store.getLocation().getY() + ", " + store.getLocation().getY() + "]";
             String sells = "sells = [";
             for (SDMSell itemSold : store.getSDMPrices().getSDMSell()) {
-                //sells.concat("ajkbj;lkdjsfa;lkjdafd;sj");
                 sells = sells.concat(" {item-id=" + itemSold.getItemId() + ", price=" + itemSold.getPrice() + "},");
             }
             sells = sells.concat("]");

@@ -2,7 +2,7 @@ package SDM;
 
 import Inventory.Inventory;
 import Inventory.InventoryItem;
-import Item.Item;
+//import Item.Item;
 import Orders.Orders;
 import Orders.Order;
 import Store.Store;
@@ -18,18 +18,24 @@ public class SDM {
 
     protected String loadingErrorMessage="";
     protected SuperDuperMarketDescriptor mySDM;
-    protected List<SDMItem> sdmItems;
-    //protected List<SDMStore> sdmStores;
+
+    ////////////////////////////////////////////////
+    // Used for validation part
+    protected List<Store> stores;
+    public List<Store> getStores(){return stores;}
+    //
+//    protected List<Item> items;
+//    public List<Item> getItems(){return items;}
+    /////////////////////////////////////
+
+
+    /////////////////////////////////////////////////////////////////////////////////
+    // inventory and orderHistory are only created after validation
     protected Inventory inventory;
     protected Orders orderHistory;
 
-    protected List<Store> stores;
-    protected List<Item> items;
 
     public Orders getOrderHistory(){ return orderHistory; }
-
-    public List<Store> getStores(){return stores;}
-    public List<Item> getItems(){return items;}
     public Inventory getInventory(){return inventory;}
 
 
@@ -57,8 +63,6 @@ public class SDM {
                 System.out.println("\nAll stores created!\n\n");
                 inventory.getListInventoryItems().stream().forEach(i->i.updateAvePrice());
                 orderHistory = new Orders();
-//                sdmItems = getListOfSDMItems();
-//                sdmStores = getListOfSDMStores();
                 res = true;
             }
 
@@ -67,7 +71,6 @@ public class SDM {
         } catch (JAXBException e) {
             e.printStackTrace();
             loadingErrorMessage = loadingErrorMessage.concat("Encountered JAXException: SDM from file is not valid");
-            //System.out.println("SDM from file is not valid");
             return false;
         }
     }
@@ -81,18 +84,6 @@ public class SDM {
             InventoryItem item = new InventoryItem(sdmItem);
             inventory.addNewItemToInventory(item);
         }
-
-//        for (Item item: items){
-//            List<Store> carryingStores = stores.stream().filter(i-> i.getInventory().containsKey(item.getItemId())).collect(Collectors.toList());
-//            float tmpSum = 0;
-//
-//            for (Store s: carryingStores){
-//                item.getStoresSellingItem().add(s);
-//                int price = (Integer) s.getInventory().get(item.getItemId()).get("price");
-//                tmpSum += price;
-//            }
-//            item.setAvePrice(tmpSum/carryingStores.size());
-        //}
     }
 
     public void createStores(SuperDuperMarketDescriptor sdm){
@@ -144,7 +135,6 @@ public class SDM {
     }
 
 
-
     public String getLoadingErrorMessage() {return loadingErrorMessage;}
     public SuperDuperMarketDescriptor getSuperDuperMarketDescriptor(){return mySDM;}
 
@@ -186,135 +176,6 @@ public class SDM {
         return  res;
     }
 
-    public List<Integer> getListOfPriceIdsForStore(SDMStore store) {
-        List<SDMSell> itemsSold = store.getSDMPrices().getSDMSell();
-        List<Integer> res = new ArrayList<>();
-
-        for (SDMSell item: itemsSold){
-            res.add(item.getItemId());
-        }
-        return  res;
-    }
-
-    public String getNameOfProductById(int id){
-        try{
-            String res = getListOfSDMItems().stream().filter(item -> item.getId()==id).findFirst().get().getName();
-            return res;
-        } catch(NoSuchElementException e){
-            return "";
-        }
-    }
-
-    public SDMItem getSDMItemById(int id){
-        return sdmItems.stream().filter(item -> item.getId()==id).findFirst().orElse(null);
-    }
-
-    public SDMSell getSDMSellById(SDMStore store, int id){
-        return store.getSDMPrices().getSDMSell().stream().filter(item->item.getItemId() == id).findFirst().orElse(null);
-    }
-
-    public int getPriceOfItemAtStore(int id, SDMStore store){
-        try{
-            return store.getSDMPrices().getSDMSell().stream().filter(item->item.getItemId() == id).findFirst().get().getPrice();
-        } catch (NoSuchElementException e){
-            System.out.println("No such element found!");
-            return -1;
-        }
-    }
-
-    public String getNameByItemId(int id){
-        try{
-            return getListOfSDMItems().stream().filter(item-> item.getId() == id).findFirst().get().getName();
-        } catch (NoSuchElementException e){
-            System.out.println("Could not find name - No such element found!");
-            return "-1";
-        }
-    }
-
-    /*
-    Returns list in format {itemId, itemName, price, purchaseCategory}
-     */
-    public Map<String, Object> getFullDetailsForItem(SDMSell itemSold, int storeId){
-        SDMItem item;
-        String itemName;
-        item = sdmItems.stream().filter(i -> i.getId() == itemSold.getItemId()).findAny().orElse(null);
-
-        Map<String, Object> itemMap = new HashMap<String, Object>();
-        itemMap.put("itemId", item.getId());
-        itemMap.put("itemName", item.getName());
-        itemMap.put("PurchaseCategory", item.getPurchaseCategory());
-        itemMap.put("Price", itemSold.getPrice());
-
-        return itemMap;
-    }
-
-    /*
-    Input: int itemId
-    Returns Map<k,v> of stores that sell item with id=itemId
-
-     k = int StoreId
-     v =  int price at store k
-     */
-    public Map<Integer, Integer> getMapForStoresThatSellItem(int itemId){
-        Map<Integer, Integer> res = new HashMap<>();
-
-        for (SDMStore store: getListOfSDMStores()){
-            List<SDMSell> sells = store.getSDMPrices().getSDMSell();
-
-            SDMSell sold = sells.stream().filter(item->item.getItemId() == itemId).findFirst().orElse(null);
-            System.out.println("For store " + store.getId() + " and itemId= " + itemId +", is Object sold  null? :" + (sold == null));
-
-            if (sold != null){
-                res.put(store.getId(), sold.getPrice());
-            }
-        }
-        return res;
-    }
-
-    public int getPriceForItemAtStore(int itemId, SDMStore store){
-        int res = -1;
-        SDMSell item = store.getSDMPrices().getSDMSell().stream().filter(i -> i.getItemId() == itemId).findFirst().orElse(null);
-
-        if (item != null){
-            res = item.getPrice();
-        }
-        return res;
-    }
-
-
-
-
-
-
-    public String showStoreInformation(SDMStore store){
-        //String res = "";
-        String str1 = "\nStore-Id= " + store.getId() + ", name= " + store.getName();
-        String str2 = "";
-
-        //String str2 =  " {item-id=" + itemSold.getItemId() + ", price=" + itemSold.getPrice() + "},"
-        for (SDMSell itemSold: store.getSDMPrices().getSDMSell()){
-
-            //TODO: Make more efficient
-            String itemName = "";
-            for (SDMItem item: sdmItems){
-                int itemNum = itemSold.getItemId();
-
-                if (itemNum == item.getId()){
-                    str2 = str2.concat("\n\t{item-id=" + itemNum + ", name= " + item.getName() + ", PurchaseCategory= " + item.getPurchaseCategory() + "price= " + itemSold.getPrice());
-                    str2 = str2.concat(", Quantity ordered= ");
-                }
-
-            }
-        }
-        List<Integer> storeLoc = getStoreLocation(store);
-        String str3 = "\nlocation=" + "(" + storeLoc.get(0) + ", " + storeLoc.get(1) + "), PPK= " + store.getDeliveryPpk();
-        String res = str1 + ", " + str2 + str3;
-        return res;
-    }
-
-
-
-
     private boolean checkLocationsAreAllowed(List<SDMStore> listOfStores) {
         boolean res = true;
         int x,y;
@@ -340,9 +201,6 @@ public class SDM {
         }
 
 
-
-
-
     public boolean checkEachExistingItemSoldSomewhere(List<SDMStore> sdmStores, List<Integer> listOfExistingItemIds) {
         boolean res = true;
         Set<Integer> itemsSold = new HashSet<>();
@@ -357,7 +215,6 @@ public class SDM {
         for (Integer existingItem: listOfExistingItemIds){
             if (!itemsSold.contains(existingItem)){
                 loadingErrorMessage = loadingErrorMessage.concat("Error: Item with id= " + existingItem + " is not sold in any store.");
-                //System.out.println("Error: Item with id= " + existingItem + " is not sold in any store.");
                 res = false;
             }
         }
@@ -391,7 +248,6 @@ public class SDM {
             for (SDMSell sold: itemsSold){
                 if (!tmpSet.add(sold.getItemId())){
                     loadingErrorMessage = loadingErrorMessage.concat("Error: Store-Id = " + store.getId() + " is selling multiple items with id =" + sold.getItemId());
-                    //System.out.println("Error: Store-Id = " + store.getId() + " is selling multiple items with id =" + sold.getItemId());
                     res = false;
                 }
             }
@@ -408,8 +264,6 @@ public class SDM {
         for (Integer num: inputList){
             if (!tmpSet.add(num)){
                 loadingErrorMessage = loadingErrorMessage.concat("Error: id=" + num + " is not unique for type " + problematicType + "\n");
-                //System.out.println("Error: id=" + num + " is not unique for type " + problematicType + "\n");
-
                 res = false;
             }
         }
