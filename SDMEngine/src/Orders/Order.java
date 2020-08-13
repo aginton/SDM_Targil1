@@ -24,6 +24,7 @@ public class Order {
     protected Cart cart;
 
     public Order(Store store, List<Integer> userLocation, Date orderDate,float deliveryDistance, Cart c){
+        this.orderId = numOfOrders++;
         this.store = store;
         this.userLocation = userLocation;
         this.orderDate = orderDate;

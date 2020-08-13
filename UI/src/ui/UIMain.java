@@ -161,8 +161,8 @@ public class UIMain {
             System.out.printf("| Order-id: %d | %-10s | Store-Id: %-5d | %-13s |\n",orderId,date, storeId, storeName);
             printCartDetails(cart);
             System.out.println("\n\nSubtotal: " + cartTotal);
-            System.out.printf("Delivery fee: %.2f", deliveryCost);
-            System.out.printf("Total: %.2f", total);
+            System.out.printf("Delivery fee: %.2f\n", deliveryCost);
+            System.out.printf("Total: %.2f\n", total);
             System.out.println("==============================================================================================");
 
         }
