@@ -1,9 +1,8 @@
 package ui;
 
-
 import Inventory.Inventory;
 import Inventory.InventoryItem;
-//import Item.Item;
+import Inventory.ePurchaseCategory;
 import Orders.Order;
 import Orders.Orders;
 import Orders.Cart;
@@ -49,17 +48,16 @@ public class UIMain {
             switch (operator) {
 
                 case "1":
-                    String tmpString = readFilePath();
+                    String filePath = readFilePath();
 
-                    if (!tmpString.equalsIgnoreCase("q")) {
-                        if (sdmInstance.tryLoadingSDMObjectFromFile(tmpString)) {
+                    if (!filePath.equalsIgnoreCase("q")) {
+                        if (sdmInstance.tryLoadingSDMObjectFromFile(filePath)) {
                             System.out.println("SDM-File loaded successfully!");
                             isSDMLoaded = true;
                         } else {
                             System.out.println("\nUnable to load file:");
                             System.out.println(sdmInstance.getLoadingErrorMessage());
                         }
-
                     }
                     break;
 
@@ -67,7 +65,6 @@ public class UIMain {
                 case "2":
                     if (isSDMLoaded) {
                         viewAllStoresInSystem(sdmInstance);
-                        //printStoreInformation(sdmInstance);
                     }
                     break;
 
@@ -114,25 +111,7 @@ public class UIMain {
         }
     }
 
-    private static void viewAllItemsInSystem(SDM sdmInstance) {
-        Inventory inventory = sdmInstance.getInventory();
 
-        //List<Item> items = sdmInstance.getItems();
-        System.out.printf("\n| item-Id | %-15s | Purchase-Category | amount of stores carrying item | ave price | units sold | ", "item-Name");
-        System.out.println("\n---------------------------------------------------------------------------------------------------------------");
-
-
-        for (InventoryItem item: inventory.getListInventoryItems()){
-
-
-            System.out.printf("|%-9d|%-17s|%-19s|%-32d|%-11d|%-12d|\n", item.getInventoryItemId(),
-                    item.getItemName(),
-                    item.getPurchaseCategory(),
-                    item.getStoresCarryingItem().size(),
-                    item.getAvePrice(),
-                    item.getAmountSold());
-        }
-    }
 
     private static void viewOrderHistory(SDM sdmInstance) {
         List<Order> history = sdmInstance.getOrderHistory().getOrders();
@@ -172,7 +151,7 @@ public class UIMain {
 
     private static void placeAnOrder(SDM sdmInstance) {
         List<Store> listOfStores = sdmInstance.getStores();
-        Store storeChoice;
+        Store storeChoice = null;
         List<Integer> userLocation = new ArrayList<>();
         int userInput;
         float amount;
@@ -273,9 +252,9 @@ public class UIMain {
         if (cart != null){
             cart.getCart().forEach((k,v)->{
                 String name = v.getItemName();
-                String pCat = v.getPurchaseCategory();
+                ePurchaseCategory pCat = v.getPurchaseCategory();
                 int price = v.getPrice();
-                float amount = v.getAmount();
+                float amount = v.getAmountInCart();
                 float itemTotalCost = price*amount;
                 System.out.printf("\n%-3d| %-15s| unit price=%-3d| %8s: %-5.2f| cost=%-5.2f", k, name, price, pCat, amount, itemTotalCost);
             });
@@ -482,7 +461,7 @@ public class UIMain {
         }
     }
 
-    private static float getAmount(String purchaseCat) {
+    private static float getAmount(ePurchaseCategory purchaseCat) {
         boolean isValidQuantity = false;
         float res;
         Scanner in = new Scanner(System.in);
@@ -490,13 +469,13 @@ public class UIMain {
 
         while (true) {
             try {
-                if (purchaseCat.equals("Weight")) {
+                if (purchaseCat == ePurchaseCategory.WEIGHT) {
                     df = new DecimalFormat("0.00");
                     System.out.println("Please enter order weight in kgs: ");
                     res = in.nextFloat();
                     if (res > 0)
                         return Float.valueOf(df.format(res));
-                } else if (purchaseCat.equals("Quantity")) {
+                } else if (purchaseCat == ePurchaseCategory.QUANTITY) {
                     System.out.println("Please enter order quantity: ");
                     res = in.nextFloat();
 
@@ -554,14 +533,16 @@ public class UIMain {
             System.out.printf("| Store-id: %-3d | Store-name: %-10s |",store.getStoreId(), store.getStoreName());
             viewInventoryForStore(store);
             viewOrdersForStore(store);
+            System.out.printf("\nPPK: %d", store.getDeliveryPpk());
+            System.out.printf("\nTotal income from deliveries: %.2f", store.getTotalDeliveryIncome());
         }
-
     }
 
     private static void viewOrdersForStore(Store store) {
         List<Order> orders = store.getOrders();
+        System.out.println("\nOrders: ");
         if (orders.isEmpty()){
-            System.out.println("\nNo orders yet for store " + store.getStoreId());
+            System.out.println("No orders yet for store " + store.getStoreId());
         } else{
             System.out.printf("\nOrder history for store %d:\n", store.getStoreId());
             System.out.println("| Order Date  | tot. num. items in cart | cart subtotal | total | ");
@@ -578,9 +559,32 @@ public class UIMain {
 
     }
 
+    private static void viewAllItemsInSystem(SDM sdmInstance) {
+
+        Inventory inventory = sdmInstance.getInventory();
+        //List<Item> items = sdmInstance.getItems();
+        System.out.printf("\n| item-Id | %-15s | Purchase-Category | Amount of stores carrying item | Ave price | Total amount sold | ", "Item-Name");
+        System.out.println("\n---------------------------------------------------------------------------------------------------------------");
+
+        //TODO: change this print to show kgs or packages
+        for (InventoryItem item: inventory.getListInventoryItems()){
+            int numStoresCaryingItem = inventory.getMapItemsToStoresWithItem().get(item).size();
+            float avePrice = inventory.getMapItemsToAvePrice().get(item);
+            float totalAmountSold = inventory.getMapItemsToTotalSold().get(item);
+
+            System.out.printf("|%-9d|%-17s|%-19s|%-32d|%-11.2f|%-18.2f|\n",
+                    item.getInventoryItemId(),
+                    item.getItemName(),
+                    item.getPurchaseCategory(),
+                    numStoresCaryingItem,
+                    avePrice,
+                    totalAmountSold);
+        }
+    }
+
     private static void viewInventoryForStore(Store store) {
         List<InventoryItem> storeInventory = store.getInventoryItems();
-        System.out.println("\n\nInventory:");
+        System.out.println("\nInventory: ");
         System.out.printf("| item-Id | %-15s | Purchase-Category | price | amount sold |", "item-Name");
         System.out.println("\n-----------------------------------------------------------------------");
         storeInventory.forEach(item->{
@@ -588,9 +592,9 @@ public class UIMain {
             int price = store.getMapItemToPrices().get(id);
             float amountSold = store.getMapItemsToAmountSold().get(id);
             String s = String.format("%.2f", amountSold);
-            if (item.getPurchaseCategory().equalsIgnoreCase("weight"))
+            if (item.getPurchaseCategory() == ePurchaseCategory.WEIGHT)
                 s = s.concat( " kgs");
-            else if (item.getPurchaseCategory().equalsIgnoreCase("quantity"))
+            else if (item.getPurchaseCategory() == ePurchaseCategory.QUANTITY)
                 s = s.concat( " pckgs");
 
 

@@ -14,39 +14,38 @@ import java.util.Objects;
 
 public class Store {
 
-    protected int storeId;
-    protected String storeName;
-    protected int deliveryPpk;
+    private int storeId;
+    private String storeName;
+    private int deliveryPpk;
     //TODO: implement totalItemsSold or get rid of it altogether
-    protected int totalItemsSold;
-    protected HashMap<Integer, Float> mapItemsToAmountSold;
-    protected HashMap<Integer, Integer> mapItemToPrices;
-    protected List<InventoryItem> inventoryItems;
-    protected List<Integer> storeLocation;
-    protected List<Order> orders;
+    //protected int totalItemsSold;
+    private float totalDeliveryIncome;
+    private HashMap<Integer, Float> mapItemsToAmountSold;
+    private HashMap<Integer, Integer> mapItemToPrices;
+    private List<InventoryItem> inventoryItems;
+    private List<Integer> storeLocation;
+    private List<Order> orders;
 
-    public Store(SDMStore store, List<Integer> storeLocation, int ppk) {
+    public Store(SDMStore store) {
         this.storeId = store.getId();
         this.storeName = store.getName();
-        this.storeLocation = storeLocation;
-        this.totalItemsSold = 0;
-        this.deliveryPpk = ppk;
+        this.storeLocation = new ArrayList();
+        storeLocation.add(store.getLocation().getX());
+        storeLocation.add(store.getLocation().getY());
+        this.totalDeliveryIncome = 0f;
+        this.deliveryPpk = store.getDeliveryPpk();
         this.inventoryItems = new ArrayList<>();
         this.mapItemsToAmountSold = new HashMap<>();
         this.mapItemToPrices = new HashMap<>();
 
         for (SDMSell sell : store.getSDMPrices().getSDMSell()) {
             mapItemToPrices.put(sell.getItemId(), sell.getPrice());
-        }
-
-        for (SDMSell sell : store.getSDMPrices().getSDMSell()) {
             mapItemsToAmountSold.put(sell.getItemId(), (float) 0);
         }
 
         this.orders = new ArrayList<>();
         System.out.println("Successfully created store " + storeId + "!");
     }
-
 
     public List<InventoryItem> getInventoryItems() {
         return inventoryItems;
@@ -64,11 +63,7 @@ public class Store {
         return mapItemToPrices;
     }
 
-
-    public int getTotalItemsSold() {
-        return totalItemsSold;
-    }
-
+    public double getTotalDeliveryIncome() {return totalDeliveryIncome; }
 
     public void setStoreInventory(List<InventoryItem> i_inventoryItems) {
         if (this.inventoryItems != null)
@@ -113,7 +108,7 @@ public class Store {
     //assuming storing amountSold as float
     private void updateStoreInventory(Cart cart) {
         cart.getCart().forEach((k, v) -> {
-            float amountInCart = v.getAmount();
+            float amountInCart = v.getAmountInCart();
             float oldAmountSold = mapItemsToAmountSold.get(k);
             mapItemsToAmountSold.put(k, amountInCart + oldAmountSold);
         });
@@ -136,7 +131,6 @@ public class Store {
         Store store = (Store) o;
         return storeId == store.storeId &&
                 deliveryPpk == store.deliveryPpk &&
-                totalItemsSold == store.totalItemsSold &&
                 storeName.equals(store.storeName) &&
                 Objects.equals(storeLocation, store.storeLocation) &&
                 Objects.equals(inventoryItems, store.inventoryItems) &&

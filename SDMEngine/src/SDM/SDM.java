@@ -15,20 +15,17 @@ import java.util.*;
 
 public class SDM {
 
-    protected String loadingErrorMessage="";
-    protected SuperDuperMarketDescriptor mySDM;
-
-    protected List<Store> stores;
-    public List<Store> getStores(){return stores;}
-
+    private String loadingErrorMessage="";
+    private SuperDuperMarketDescriptor mySDM;
+    private List<Store> stores;
     // inventory and orderHistory are only created after validation
-    protected Inventory inventory;
-    protected Orders orderHistory;
-
+    private Inventory inventory;
+    private Orders orderHistory;
 
 
     public Orders getOrderHistory(){ return orderHistory; }
     public Inventory getInventory(){return inventory;}
+    public List<Store> getStores(){return stores;}
 
 
     /*
@@ -43,20 +40,23 @@ public class SDM {
             Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
             SuperDuperMarketDescriptor sdm = (SuperDuperMarketDescriptor) jaxbUnmarshaller.unmarshal(file);
 
-            if (isSDMValidAppWise(sdm)){
-                mySDM = sdm;
-                //First create each inventory item
-                System.out.println("About to create inventory");
-                createInventory(sdm);
-                System.out.println("\nAll inventory items created!\n\n");
+                if (isSDMValidAppWise(sdm)) {
+                    mySDM = sdm;
+                    //First create each inventory item
+                    System.out.println("About to create inventory");
+                    createInventory(sdm);
+                    System.out.println("\nAll inventory items created!\n\n");
 
-                System.out.println("About to create stores");
-                createStores(sdm);
-                System.out.println("\nAll stores created!\n\n");
-                inventory.getListInventoryItems().stream().forEach(i->i.updateAvePrice());
-                orderHistory = new Orders();
-                res = true;
-            }
+                    System.out.println("About to create stores");
+                    createStores(sdm);
+                    System.out.println("\nAll stores created!\n\n");
+
+                    inventory.updateStoresCarryingItems(stores);
+                    inventory.updateAvePrice();
+
+                    orderHistory = new Orders();
+                    res = true;
+                }
 
             return res;
 
@@ -88,22 +88,22 @@ public class SDM {
             storeLoc.add(store.getLocation().getX());
             storeLoc.add(store.getLocation().getY());
 
-            Store newStore = new Store(store, storeLoc, store.getDeliveryPpk());
-
-            List<InventoryItem> newStoreInventory = new ArrayList<InventoryItem>();
+            Store newStore = new Store(store);
 
             for (SDMSell sell: store.getSDMPrices().getSDMSell()){
                 InventoryItem itemToAdd = inventory.getListInventoryItems().stream().filter(i->i.getInventoryItemId()==sell.getItemId()).findFirst().get();
                 if (itemToAdd != null){
-                    itemToAdd.addCarryingStore(newStore);
-                    newStoreInventory.add(itemToAdd);
+                    newStore.getInventoryItems().add(itemToAdd);
                 }
             }
-            newStore.setStoreInventory(newStoreInventory);
+
             stores.add(newStore);
         }
     }
 
+    public boolean isXMLfileType(File file) {
+        return file.getName().endsWith(".xml");
+    }
 
     public boolean isSDMValidAppWise(SuperDuperMarketDescriptor sdm) {
 
@@ -116,11 +116,17 @@ public class SDM {
         List<Integer> listOfItemIds = getListOfItemIds(sdmItems);
         List<Integer> listOfStoreIds = getListOfStoreIds(sdmStores);
 
+        //error 3.2
         areItemIdsUnique = checkListOfIntsUnique(listOfItemIds, "SDM-Items");
+        //error 3.3
         areStoreIdsUnique = checkListOfIntsUnique(listOfStoreIds, "SDM-Stores");
-        isStoreUsingUniqueItemIds = checkStoreUsesUniqueItemIds(sdmStores);
+        //error 3.4
         isStoreUsingExistingItemIds = checkItemsSoldExist(sdmStores, listOfItemIds);
+        //error 3.5
         isEachExistingItemSoldSomewhere = checkEachExistingItemSoldSomewhere(sdmStores, listOfItemIds);
+        //error 3.6
+        isStoreUsingUniqueItemIds = checkStoreUsesUniqueItemIds(sdmStores);
+        //error 3.7
         areLocationsLegal = checkLocationsAreAllowed(sdmStores);
 
         return (areItemIdsUnique && areStoreIdsUnique && isStoreUsingExistingItemIds && isStoreUsingUniqueItemIds && isEachExistingItemSoldSomewhere && areLocationsLegal);
@@ -177,8 +183,8 @@ public class SDM {
             List<Integer> tmpList = new ArrayList<>();
             x = store.getLocation().getX();
             y = store.getLocation().getY();
-            if (x < 0 || y < 0 || x > 50 || y > 50){
-                loadingErrorMessage = loadingErrorMessage.concat("Error: Store-id= " + store.getId() + " has illegal location ("+x+", " + y +"). Coordinates must be between [0,50]");
+            if (x < 1 || y < 1 || x > 50 || y > 50){
+                loadingErrorMessage = loadingErrorMessage.concat("Error: Store-id= " + store.getId() + " has illegal location ("+x+", " + y +"). Coordinates must be between [1,50]");
                 res = false;
             }
 
@@ -270,7 +276,7 @@ public class SDM {
         System.out.println("About to add order to orderHistory");
         orderHistory.addOrder(order);
 
-        inventory.updateSalesMap(order.getCartForThisOrder().getCart());
+        inventory.updateSalesMap(order);
         System.out.println("Successfully added order to orderHistory!\n");
     }
 }

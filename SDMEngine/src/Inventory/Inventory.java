@@ -1,6 +1,9 @@
 package Inventory;
 
+import Orders.Cart;
 import Orders.CartItem;
+import Orders.Order;
+import Store.Store;
 
 import java.util.*;
 
@@ -8,15 +11,17 @@ public class Inventory {
 
     //TODO: Check if this is number of units sold or number of orders containing item.
     //for example, if in one order there are 5 toiler paper quantities, do we add 5 or 1?
-    protected HashMap<InventoryItem, Integer> mapItemsToTotalSold;
+    private List<InventoryItem> listInventoryItems;
+    private HashMap<InventoryItem, Float> mapItemsToTotalSold;
+    private HashMap<InventoryItem, Float> mapItemsToAvePrice;
+    private HashMap<InventoryItem, Set<Store>> mapItemsToStoresWithItem;
 
-
-    //  protected HashMap<InventoryItem, Integer> mapHowManyOrdersContainItem;
-    protected List<InventoryItem> listInventoryItems;
 
     public Inventory() {
         this.listInventoryItems = new ArrayList<InventoryItem>();
-        this.mapItemsToTotalSold = new HashMap<InventoryItem, Integer>();
+        this.mapItemsToTotalSold = new HashMap<InventoryItem, Float>();
+        this.mapItemsToAvePrice = new HashMap<InventoryItem, Float>();
+        this.mapItemsToStoresWithItem = new HashMap<InventoryItem, Set<Store>>();
     }
 
 
@@ -27,16 +32,21 @@ public class Inventory {
     public void addNewItemToInventory(InventoryItem item) {
         System.out.println("Just entered addNewItemToInventory() for item " + item.getInventoryItemId());
         System.out.println("Result of setInventoryItems.contains(item): " + listInventoryItems.contains(item));
-        ;
 
-        if (!listInventoryItems.contains(item)) {
-            System.out.println("Entered not if clause");
-            listInventoryItems.add(item);
-            mapItemsToTotalSold.put(item, 0);
-            System.out.println("Added item " + item.inventoryItemId + "");
-            return;
-        }
-        System.out.println("Error: this item already is in inventory!");
+        listInventoryItems.add(item);
+        System.out.println("Added item " + item.getInventoryItemId() + "");
+        mapItemsToTotalSold.put(item, 0f);
+        mapItemsToAvePrice.put(item, 0f);
+        mapItemsToStoresWithItem.put(item, new HashSet<Store>());
+
+//        if (!listInventoryItems.contains(item)) {
+//            System.out.println("Entered not if clause");
+//            listInventoryItems.add(item);
+//            mapItemsToTotalSold.put(item, 0f);
+//            System.out.println("Added item " + item.getInventoryItemId() + "");
+//            return;
+//        }
+//        System.out.println("Error: this item already is in inventory!");
     }
 
 
@@ -49,30 +59,29 @@ public class Inventory {
         return null;
     }
 
-    public void updateSalesMap(HashMap<Integer, CartItem> cart) {
-        cart.forEach((k, v) -> updateSalesMap(v));
+
+    public HashMap<InventoryItem, Float> getMapItemsToTotalSold() {
+        return mapItemsToTotalSold;
     }
 
-    private void updateSalesMap(CartItem v) {
-        //int cartItemId = v.getItemId();
-        InventoryItem item = getInventoryItemById(v.getItemId());
-        if (item == null) {
-            System.out.printf("Inventory does not contain item %d, %s!", v.getItemId(), v.getItemName());
-            return;
-        } else {
-            //int oldAmount = mapItemsToTotalSold.get(item);
-            int oldAmount = item.amountSold;
+    public HashMap<InventoryItem, Float> getMapItemsToAvePrice() {
+        return mapItemsToAvePrice;
+    }
 
-            if (v.getPurchaseCategory().equalsIgnoreCase("weight")) {
-                //mapItemsToTotalSold.put(item, oldAmount+1);
-                item.setAmountSold(oldAmount + 1);
+    public HashMap<InventoryItem, Set<Store>> getMapItemsToStoresWithItem() {
+        return mapItemsToStoresWithItem;
+    }
 
-            } else if (v.getPurchaseCategory().equalsIgnoreCase("quantity")) {
-                int amountToAdd = Math.round(v.getAmount());
-                //mapItemsToTotalSold.put(item, oldAmount+amountToAdd);
-                item.setAmountSold(oldAmount + amountToAdd);
-            }
-        }
+    public void updateSalesMap(Order order) {
+        Cart cart = order.getCartForThisOrder();
+        cart.getCart().forEach((k, v) -> updateSalesMap(v));
+    }
+
+    private void updateSalesMap(CartItem cartItem) {
+
+        InventoryItem item = getInventoryItemById(cartItem.getInventoryItemId());
+        float oldAmount = mapItemsToTotalSold.get(item);
+        mapItemsToTotalSold.put(item, oldAmount + cartItem.getAmountInCart());
     }
 
     @Override
@@ -93,5 +102,33 @@ public class Inventory {
         if (listInventoryItems == null)
             listInventoryItems = new ArrayList<InventoryItem>();
         return listInventoryItems;
+    }
+
+
+    //TODO: change to streams
+    public void updateAvePrice() {
+
+        for(InventoryItem item : listInventoryItems) {
+            Set<Store> setOStores = mapItemsToStoresWithItem.get(item);
+            float sum = 0;
+            for (Store store : setOStores) {
+                sum += store.getMapItemToPrices().get(item.getInventoryItemId());
+            }
+            int size = setOStores.size();
+            mapItemsToAvePrice.put(item, sum / size);
+        }
+
+    }
+
+    public void updateStoresCarryingItems(List<Store> stores) {
+
+        for(InventoryItem item : listInventoryItems) {
+            Set<Store> setOfStores = mapItemsToStoresWithItem.get(item);
+           for(Store store : stores) {
+               if (store.getInventoryItems().contains(item)) 
+                   setOfStores.add(store);
+           }
+           mapItemsToStoresWithItem.put(item, setOfStores);
+        }
     }
 }

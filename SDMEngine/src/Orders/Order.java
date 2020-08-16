@@ -11,27 +11,27 @@ import java.util.Objects;
 
 public class Order {
     private static int numOfOrders = 1;
-    protected int orderId;
-    protected List<Integer> userLocation;
-    protected Date orderDate;
-    protected Store store;
-    protected Cart cart;
-    protected float cartTotal;
-    protected float deliveryCost;
+    private int orderId;
+    private List<Integer> userLocation;
+    private Date orderDate;
+    private float cartTotal;
+    private Store store;
+    private Cart cart;
+    private float deliveryCost;
 
-    public Order(Store store, List<Integer> userLocation, Date orderDate,float deliveryDistance, Cart c){
+    public Order(Store store, List<Integer> userLocation, Date orderDate,float deliveryCost, Cart cart){
         this.orderId = numOfOrders++;
         this.store = store;
         this.userLocation = userLocation;
         this.orderDate = orderDate;
-        this.cartTotal = cartTotal;
-        this.deliveryCost = deliveryDistance;
-        this.cart = c;
+        this.deliveryCost = deliveryCost;
+        this.cart = cart;
     }
 
     public int getOrderId(){return orderId;}
     public Store getStore(){return store;}
 //    public String getStoreName(){return storeName;}
+
 
     @Override
     public boolean equals(Object o) {

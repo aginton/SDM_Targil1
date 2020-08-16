@@ -9,50 +9,26 @@ import java.util.Objects;
 import java.util.Set;
 
 public class InventoryItem implements Comparable<InventoryItem> {
-    protected int inventoryItemId;
-    protected String itemName;
-    protected String purchaseCategory;
-    protected int amountSold;
-    protected int avePrice;
 
-    public void setAmountSold(int amountSold) {
-        this.amountSold = amountSold;
-    }
+    private int inventoryItemId;
+    private String itemName;
+    private final ePurchaseCategory purchaseCategory;
 
-    protected Set<Store> storesCarryingItem;
+    public InventoryItem(SDMItem item) {
 
-    public int getAvePrice() {
-        return avePrice;
-    }
-
-    public InventoryItem(SDMItem item){
         this.inventoryItemId = item.getId();
         this.itemName = item.getName();
-        this.purchaseCategory = item.getPurchaseCategory();
-        this.amountSold = 0;
-        this.avePrice = 0;
-        this.storesCarryingItem = new HashSet<Store>();
+        this.purchaseCategory = ePurchaseCategory.valueOf(item.getPurchaseCategory().toUpperCase());
         System.out.printf("Created InventoryItem %d!", inventoryItemId);
     }
 
-    public void updateAvePrice(){
-        int sum = 0;
-        for (Store store: storesCarryingItem){
-            sum += store.getMapItemToPrices().get(inventoryItemId);
-        }
-
-        //this.avePrice = (sum / storesCarryingItem.size());
-        this.avePrice = sum;
+    public InventoryItem(InventoryItem item){
+        this.inventoryItemId = item.getInventoryItemId();
+        this.purchaseCategory = item.getPurchaseCategory();
+        this.itemName = item.getItemName();
     }
 
-    public void setAvePrice(int avePrice) {
-        this.avePrice = avePrice;
-    }
-
-    public void addCarryingStore(Store store){
-        storesCarryingItem.add(store);
-    }
-
+    //Getters
     public int getInventoryItemId() {
         return inventoryItemId;
     }
@@ -61,17 +37,22 @@ public class InventoryItem implements Comparable<InventoryItem> {
         return itemName;
     }
 
-    public String getPurchaseCategory() {
+    public ePurchaseCategory getPurchaseCategory() {
         return purchaseCategory;
     }
 
-    public Set<Store> getStoresCarryingItem() {
-        return storesCarryingItem;
-    }
-
-    public int getAmountSold() {
-        return amountSold;
-    }
+//    public void updateAvePrice(){
+//        float sum = 0f;
+//        for (Store store: storesCarryingItem){
+//            sum += store.getMapItemToPrices().get(inventoryItemId);
+//        }
+//
+//        this.avePrice = (sum / storesCarryingItem.size());
+//    }
+//
+//    public void addCarryingStore(Store store){
+//        storesCarryingItem.add(store);
+//    }
 
     //https://www.codexpedia.com/java/java-set-and-hashset-with-custom-class/
     // Currently using default equals hashCode
@@ -89,8 +70,6 @@ public class InventoryItem implements Comparable<InventoryItem> {
             return false;
         }
     }
-
-
 
     //https://stackoverflow.com/questions/17355690/contains-and-remove-methods-for-instances-user-defined-classes-in-a-list
 

@@ -1,19 +1,22 @@
 package Orders;
 
+import Inventory.ePurchaseCategory;
+
 import java.util.HashMap;
 import java.util.Set;
 
 public class Cart {
 
-    protected HashMap<Integer, CartItem> cart;
-    protected float cartTotalPrice;
-    protected int numberOfItemsInCart = 0;
+    private HashMap<Integer,CartItem> cart;
+    private float cartTotalPrice;
 
-    public HashMap<Integer, CartItem> getCart() {
-        if (cart == null)
-            cart = new HashMap<Integer, CartItem>();
-
+    public HashMap<Integer,CartItem> getCart() {
         return cart;
+    }
+
+    public Cart() {
+        this.cart = new HashMap<Integer,CartItem>();
+        cartTotalPrice = 0f;
     }
 
     public float getCartTotalPrice() {
@@ -21,21 +24,22 @@ public class Cart {
     }
 
     public void add(CartItem item) {
-        if (item.purchaseCategory.equalsIgnoreCase("quantity"))
-            this.numberOfItemsInCart += item.amount;
+//        if (item.getPurchaseCategory() == ePurchaseCategory.QUANTITY)
+//            this.numberOfItemsInCart += item.getAmount();
+//
+//        else if (item.getPurchaseCategory() == ePurchaseCategory.WEIGHT)
+//            this.numberOfItemsInCart++;
+//
+//        this.cartTotalPrice += item.getPrice() * item.getAmount();
+//        int k = item.getItemId();
 
-        else if (item.purchaseCategory.equalsIgnoreCase("weight"))
-            this.numberOfItemsInCart++;
-
-        this.cartTotalPrice += item.price * item.amount;
-        int k = item.getItemId();
-
-        if (cart.containsKey(k)) {
-            CartItem i = cart.get(k);
-            float amountInCart = i.getAmount();
-            i.setAmount(amountInCart + item.getAmount());
+        int id = item.getInventoryItemId();
+        if (cart.containsKey(id)) {
+            CartItem existingItem = cart.get(id);
+            float amountInCart = existingItem.getAmountInCart();
+            existingItem.setAmountInCart(amountInCart + item.getAmountInCart());
             return;
         }
-        cart.put(item.getItemId(), item);
+        cart.put(id, item);
     }
 }

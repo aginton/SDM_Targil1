@@ -6,7 +6,7 @@ import java.util.stream.Collectors;
 
 public class Orders {
 
-    protected List<Order> orders;
+    private List<Order> orders;
 
     public List<Order> getOrders(){
         if (orders == null){
