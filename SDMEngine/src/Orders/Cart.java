@@ -1,29 +1,26 @@
 package Orders;
 
-import Inventory.ePurchaseCategory;
-
 import java.util.HashMap;
-import java.util.Set;
 
 public class Cart {
 
     private HashMap<Integer,CartItem> cart;
     private float cartTotalPrice;
 
-    public HashMap<Integer,CartItem> getCart() {
-        return cart;
-    }
-
     public Cart() {
         this.cart = new HashMap<Integer,CartItem>();
         cartTotalPrice = 0f;
+    }
+
+    public HashMap<Integer,CartItem> getCart() {
+        return cart;
     }
 
     public float getCartTotalPrice() {
         return cartTotalPrice;
     }
 
-    public void add(CartItem item) {
+    public void add(CartItem cartItem) {
 //        if (item.getPurchaseCategory() == ePurchaseCategory.QUANTITY)
 //            this.numberOfItemsInCart += item.getAmount();
 //
@@ -33,13 +30,15 @@ public class Cart {
 //        this.cartTotalPrice += item.getPrice() * item.getAmount();
 //        int k = item.getItemId();
 
-        int id = item.getInventoryItemId();
+        int id = cartItem.getInventoryItemId();
+        cartTotalPrice += cartItem.getPrice()*cartItem.getItemAmount();
         if (cart.containsKey(id)) {
             CartItem existingItem = cart.get(id);
-            float amountInCart = existingItem.getAmountInCart();
-            existingItem.setAmountInCart(amountInCart + item.getAmountInCart());
+            float amountInCart = existingItem.getItemAmount();
+            existingItem.setItemAmount(amountInCart + cartItem.getItemAmount());
             return;
         }
-        cart.put(id, item);
+        cart.put(id, cartItem);
+
     }
 }

@@ -2,7 +2,6 @@ package Store;
 
 import Inventory.InventoryItem;
 import Orders.Cart;
-import Orders.CartItem;
 import Orders.Order;
 import jaxb.schema.generated.SDMSell;
 import jaxb.schema.generated.SDMStore;
@@ -17,6 +16,11 @@ public class Store {
     private int storeId;
     private String storeName;
     private int deliveryPpk;
+
+    public void setTotalDeliveryIncome(float totalDeliveryIncome) {
+        this.totalDeliveryIncome = totalDeliveryIncome;
+    }
+
     //TODO: implement totalItemsSold or get rid of it altogether
     //protected int totalItemsSold;
     private float totalDeliveryIncome;
@@ -63,7 +67,7 @@ public class Store {
         return mapItemToPrices;
     }
 
-    public double getTotalDeliveryIncome() {return totalDeliveryIncome; }
+    public float getTotalDeliveryIncome() {return totalDeliveryIncome; }
 
     public void setStoreInventory(List<InventoryItem> i_inventoryItems) {
         if (this.inventoryItems != null)
@@ -101,6 +105,7 @@ public class Store {
         System.out.println("\nEntered Store.addOrder()");
         System.out.println("about to call orders.add(order)");
         orders.add(order);
+        setTotalDeliveryIncome(order.getDeliveryCost()+this.getTotalDeliveryIncome());
         updateStoreInventory(order.getCartForThisOrder());
     }
 
@@ -108,7 +113,7 @@ public class Store {
     //assuming storing amountSold as float
     private void updateStoreInventory(Cart cart) {
         cart.getCart().forEach((k, v) -> {
-            float amountInCart = v.getAmountInCart();
+            float amountInCart = v.getItemAmount();
             float oldAmountSold = mapItemsToAmountSold.get(k);
             mapItemsToAmountSold.put(k, amountInCart + oldAmountSold);
         });

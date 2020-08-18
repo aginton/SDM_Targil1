@@ -58,7 +58,7 @@ public class InventoryItem implements Comparable<InventoryItem> {
     // Currently using default equals hashCode
     @Override
     public boolean equals(Object o) {
-        System.out.println("In equals");
+       // System.out.println("In equals");
         if (this == o) return true;
 
         if (o == null || getClass() != o.getClass()) return false;

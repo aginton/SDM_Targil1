@@ -81,7 +81,7 @@ public class Inventory {
 
         InventoryItem item = getInventoryItemById(cartItem.getInventoryItemId());
         float oldAmount = mapItemsToTotalSold.get(item);
-        mapItemsToTotalSold.put(item, oldAmount + cartItem.getAmountInCart());
+        mapItemsToTotalSold.put(item, oldAmount + cartItem.getItemAmount());
     }
 
     @Override

@@ -1,13 +1,12 @@
 package Orders;
 
 import Inventory.InventoryItem;
-import Inventory.ePurchaseCategory;
 
 import java.util.Objects;
 
 public class CartItem extends InventoryItem {
     
-    private float amountInCart;
+    private float itemAmount;
     private int price;
 
     public CartItem(InventoryItem item, float amount, int price){
@@ -15,7 +14,7 @@ public class CartItem extends InventoryItem {
         //this.itemId = item.getInventoryItemId();
         //this.itemName = item.getItemName();
         //this.purchaseCategory = item.getPurchaseCategory();
-        this.amountInCart = amount;
+        this.itemAmount = amount;
         this.price = price;
     }
 
@@ -23,8 +22,8 @@ public class CartItem extends InventoryItem {
 //        return itemId;
 //    }
 
-    public void setAmountInCart(float amount) {
-        this.amountInCart = amount;
+    public void setItemAmount(float amount) {
+        this.itemAmount = amount;
     }
 
     public void setPrice(int price) {
@@ -39,8 +38,8 @@ public class CartItem extends InventoryItem {
 //        return purchaseCategory;
 //    }
 
-    public float getAmountInCart() {
-        return amountInCart;
+    public float getItemAmount() {
+        return itemAmount;
     }
 
     public int getPrice() {
@@ -53,7 +52,7 @@ public class CartItem extends InventoryItem {
         if (o == null || getClass() != o.getClass()) return false;
         if (!super.equals(o)) return false;
         CartItem cartItem = (CartItem) o;
-        return Float.compare(cartItem.amountInCart, amountInCart) == 0 &&
+        return Float.compare(cartItem.itemAmount, itemAmount) == 0 &&
                 price == cartItem.price;
     }
 
@@ -71,7 +70,7 @@ public class CartItem extends InventoryItem {
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), amountInCart, price);
+        return Objects.hash(super.hashCode(), itemAmount, price);
     }
 
 

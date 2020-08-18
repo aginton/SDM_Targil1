@@ -4,7 +4,6 @@ import Inventory.Inventory;
 import Inventory.InventoryItem;
 import Inventory.ePurchaseCategory;
 import Orders.Order;
-import Orders.Orders;
 import Orders.Cart;
 import Orders.CartItem;
 import SDM.SDM;
@@ -16,7 +15,6 @@ import jaxb.schema.generated.SuperDuperMarketDescriptor;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -159,19 +157,20 @@ public class UIMain {
         Scanner in = new Scanner(System.in);
         String input;
 
-        //ask user for Store id
+        //1. Show stores and ask user for Store id
         userInput = getStoreIdFromUser(sdmInstance);
         if (userInput == -1)
             return;
 
         storeChoice = listOfStores.get(userInput - 1);
 
+        //2. Ask user for date
         //TODO: Get date/time in more user-friendly way
         Date orderDate = getOrderDateFromUser();
         if (orderDate == null)
             return;
 
-        //ask user for their location
+        //3. ask user for their location
         userLocation = getUserLocation(sdmInstance);
         if (userLocation.contains(-1))
             return;
@@ -179,16 +178,20 @@ public class UIMain {
         float distance = getDistance(userLocation, storeChoice.getStoreLocation());
         float deliveryCost = distance*storeChoice.getDeliveryPpk();
 
+        //4. Choosing items to buy
         while (true) {
             System.out.println("\nTo confirm cart purchase, enter 'confirm'. To add an item to your cart, enter 'add'. To cancel order, enter 'Q'");
             System.out.println("=======================================================================");
             System.out.println("Store: " + storeChoice.getStoreName());
             System.out.println("Order Date: " + orderDate);
             System.out.println("My location: (" + userLocation.get(0) + ", " + userLocation.get(1) + ")");
-            System.out.println("Delivery fee: " + deliveryCost);
             System.out.println("\nCart summary:");
             printCartDetails(cart);
+            System.out.printf("\nDelivery fee: %.2f", deliveryCost);
             System.out.println("\nCart subtotal:" + cart.getCartTotalPrice());
+            float total = cart.getCartTotalPrice()+deliveryCost;
+            System.out.printf("\nTotal: %.2f",total);
+
             System.out.println("");
 
             input = in.nextLine();
@@ -215,6 +218,7 @@ public class UIMain {
                     amount = getAmount(itemChosen.getPurchaseCategory());
                     CartItem cartItem = new CartItem(itemChosen, amount, price);
                     cart.add(cartItem);
+
 
                     break;
 
@@ -254,7 +258,7 @@ public class UIMain {
                 String name = v.getItemName();
                 ePurchaseCategory pCat = v.getPurchaseCategory();
                 int price = v.getPrice();
-                float amount = v.getAmountInCart();
+                float amount = v.getItemAmount();
                 float itemTotalCost = price*amount;
                 System.out.printf("\n%-3d| %-15s| unit price=%-3d| %8s: %-5.2f| cost=%-5.2f", k, name, price, pCat, amount, itemTotalCost);
             });
@@ -316,31 +320,13 @@ public class UIMain {
         List<Integer> existingItems = fullInventory.stream().map(i-> i.getInventoryItemId()).collect(Collectors.toList());
         List<Integer> storeItemIds = storeInventory.stream().map(i-> i.getInventoryItemId()).collect(Collectors.toList());
 
-        String prompt = "Please enter the Id for the item you wish to purchase: ";
-
-        prompt = prompt.concat(String.format("\n|%s| %-15s |%s| %-13s |"," item-Id ", "item-Name"," Purchase-Category ", "price"));
-        prompt = prompt.concat("\n----------------------------------------------------------------");
-
-
-        //TODO: maybe change structure of inventory to hold items instead?
-        //Create string listing items and their details
-        for (InventoryItem item : fullInventory) {
-            boolean isSoldAtStore = storeInventory.contains(item);
-
-            String s2 = String.format("\n| %-7d | %-15s | %-18s| %-13s |",
-                    item.getInventoryItemId(),
-                    item.getItemName(),
-                    item.getPurchaseCategory(),
-                    isSoldAtStore? storeChoice.getMapItemToPrices().get(item.getInventoryItemId()).toString() : "not available"
-                    );
-
-            prompt = prompt.concat(s2);
-        }
-
-        System.out.println("");
+        System.out.println("Please enter the Id for the item you wish to purchase: ");
 
         while (true) {
-            int priceId = getIntFromUser(prompt);
+            printPriceTableForStore(sdm,storeChoice);
+
+            int priceId = getIntFromUser();
+            //int priceId = getIntFromUser(prompt);
 
             if (priceId == -1)
                 return -1;
@@ -355,6 +341,47 @@ public class UIMain {
         }
     }
 
+    private static void printPriceTableForStore(SDM sdm, Store storeChoice) {
+
+        List<InventoryItem> fullInventory = sdm.getInventory().getListInventoryItems();
+        List<InventoryItem> storeInventory = storeChoice.getInventoryItems();
+
+        String prompt = "";
+        prompt = prompt.concat(String.format("\n|%s| %-15s |%s| %-13s |"," Item-Id ", "Item-Name"," Purchase-Category ", "Price"));
+        prompt = prompt.concat("\n----------------------------------------------------------------");
+
+
+        //TODO: maybe change structure of inventory to hold items instead?
+        //Create string listing items and their details
+        for (InventoryItem item : fullInventory) {
+            boolean isSoldAtStore = storeInventory.contains(item);
+
+            String s2 = String.format("\n| %-7d | %-15s | %-18s| %-13s |",
+                    item.getInventoryItemId(),
+                    item.getItemName(),
+                    item.getPurchaseCategory(),
+                    isSoldAtStore? storeChoice.getMapItemToPrices().get(item.getInventoryItemId()).toString() : "not available"
+            );
+
+            prompt = prompt.concat(s2);
+        }
+
+        System.out.println(prompt);
+        System.out.println("");
+
+    }
+
+    private static void printAvailableStores(SDM sdm){
+        //Create prompt message
+        String prompt = "\nWhich store would you like to order from? Please enter the store-id from the following options. Enter 'Q' at anytime to cancel order: ";
+        int i = 1;
+        for (Store store : sdm.getStores()) {
+            prompt = prompt.concat("\n" + i + ") Store-id= " + store.getStoreId() + ",\tname= " + store.getStoreName() + ",\tPPK= " + store.getDeliveryPpk());
+            i++;
+        }
+        System.out.println(prompt);
+    }
+
     private static int getStoreIdFromUser(SDM sdmInstance) {
         List<Store> listOfStores = sdmInstance.getStores();
         List<Integer> storeIds = listOfStores.stream().map(i->i.getStoreId()).collect(Collectors.toList());
@@ -364,17 +391,10 @@ public class UIMain {
 
         int userInput;
 
-        //Create prompt message
-        String prompt = "\nWhich store would you like to order from? Please enter the store-id from the following options. Enter 'Q' at anytime to cancel order: ";
-        int i = 1;
-        for (Store store : listOfStores) {
-            prompt = prompt.concat("\n" + i + ") Store-id= " + store.getStoreId() + ",\tname= " + store.getStoreName() + ",\tPPK= " + store.getDeliveryPpk());
-            i++;
-        }
-
         while (true) {
             try {
-                userInput = getIntFromUser(prompt);
+                printAvailableStores(sdmInstance);
+                userInput = getIntFromUser();
                 if (userInput == -1)
                     return -1;
 
@@ -388,7 +408,7 @@ public class UIMain {
                 System.out.println("Invalid input!");
             } catch (NumberFormatException nfe) {
                 System.out.println("xxxxxxxxxxxxxxxxxxxxxx");
-                System.out.println(prompt);
+                //System.out.println(prompt);
             }
         }
     }
@@ -421,9 +441,9 @@ public class UIMain {
                     System.out.println("Invalid input: too many points entered!");
                 }
 
-                if (list.get(0) < 0 || list.get(0) > 50 || list.get(1) < 0 || list.get(1) > 50) {
+                if (list.get(0) < 1 || list.get(0) > 50 || list.get(1) < 1 || list.get(1) > 50) {
                     legalRange = false;
-                    System.out.println("Invalid input: You entered " + "(" + list.get(0) + ", " + list.get(1) + "), but Coordinates must be in range [0,50]");
+                    System.out.println("Invalid input: You entered " + "(" + list.get(0) + ", " + list.get(1) + "), but Coordinates must be in range [1,50]");
                 }
 
                 if (listOfStoreLocations.contains(list)){
@@ -495,7 +515,7 @@ public class UIMain {
 
 
     //TODO: Make shorter and simpler
-    private static int getIntFromUser(String s) {
+    private static int getIntFromUser() {
         Scanner in = new Scanner(System.in);
         int userInput;
         String userInputStr;
@@ -504,7 +524,6 @@ public class UIMain {
         while (true) {
             try {
                 comingFromCancel = false;
-                System.out.println(s);
                 userInputStr = in.nextLine();
                 if (userInputStr.equalsIgnoreCase("q")) {
                     if (checkUserWantsToCancelOrder()) {
@@ -526,6 +545,39 @@ public class UIMain {
         return userInput;
     }
 
+
+//    //TODO: Make shorter and simpler
+//    private static int getIntFromUser(String s) {
+//        Scanner in = new Scanner(System.in);
+//        int userInput;
+//        String userInputStr;
+//        boolean comingFromCancel = false;
+//
+//        while (true) {
+//            try {
+//                comingFromCancel = false;
+//                System.out.println(s);
+//                userInputStr = in.nextLine();
+//                if (userInputStr.equalsIgnoreCase("q")) {
+//                    if (checkUserWantsToCancelOrder()) {
+//                        return -1;
+//                    }
+//                    comingFromCancel = true;
+//                }
+//                userInput = Integer.parseInt(userInputStr);
+//                break;
+//            } catch (InputMismatchException e) {
+//                System.out.println("Invalid input!");
+//            } catch (NumberFormatException nfe) {
+//                if (!comingFromCancel) {
+//                    System.out.println("Invalid input: Please only enter whole numbers, or 'Q' to quit");
+//                    comingFromCancel = false;
+//                }
+//            }
+//        }
+//        return userInput;
+//    }
+
     private static void viewAllStoresInSystem(SDM sdm) {
         List<Store> stores = sdm.getStores();
         for (Store store: stores){
@@ -545,7 +597,7 @@ public class UIMain {
             System.out.println("No orders yet for store " + store.getStoreId());
         } else{
             System.out.printf("\nOrder history for store %d:\n", store.getStoreId());
-            System.out.println("| Order Date  | tot. num. items in cart | cart subtotal | total | ");
+            System.out.println("| Order Date  | Tot. num. items in cart | Cart subtotal | Delivery cost | Total | ");
             System.out.println("---------------------------------------------------------------");
             store.getOrders().stream().forEach(o -> viewOrderDetails(o));
             System.out.println("");
@@ -555,7 +607,7 @@ public class UIMain {
     private static void viewOrderDetails(Order o) {
         String date = new SimpleDateFormat("dd/MM\thh:mm").format(o.getOrderDate());
 
-        System.out.printf("| %-10s | %-23s | %-13.2f | %-5.2f |" , date, "???????????", o.getCartTotal(), o.getCartTotal()+o.getDeliveryCost());
+        System.out.printf("| %-10s | %-23d | %-13.2f | %-13.2f | %-5.2f |\n" , date, o.getNumItemsInCart(), o.getCartTotal(), o.getDeliveryCost(), o.getCartTotal()+o.getDeliveryCost());
 
     }
 

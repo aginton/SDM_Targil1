@@ -1,6 +1,7 @@
 package Orders;
 
 
+import Inventory.ePurchaseCategory;
 import Store.Store;
 import jaxb.schema.generated.SDMStore;
 
@@ -14,7 +15,6 @@ public class Order {
     private int orderId;
     private List<Integer> userLocation;
     private Date orderDate;
-    private float cartTotal;
     private Store store;
     private Cart cart;
     private float deliveryCost;
@@ -39,7 +39,6 @@ public class Order {
         if (o == null || getClass() != o.getClass()) return false;
         Order order = (Order) o;
         return orderId == order.orderId &&
-                Float.compare(order.cartTotal, cartTotal) == 0 &&
                 Float.compare(order.deliveryCost, deliveryCost) == 0 &&
                 Objects.equals(userLocation, order.userLocation) &&
                 Objects.equals(orderDate, order.orderDate) &&
@@ -49,10 +48,10 @@ public class Order {
 
     @Override
     public int hashCode() {
-        return Objects.hash(orderId, userLocation, orderDate, cartTotal, deliveryCost, store, cart);
+        return Objects.hash(orderId, userLocation, orderDate, deliveryCost, store, cart);
     }
 
-    public float getCartTotal() {return cartTotal;}
+    public float getCartTotal() {return cart.getCartTotalPrice();}
     public float getDeliveryCost(){return deliveryCost;}
 
     public Date getOrderDate(){return orderDate;}
@@ -63,6 +62,21 @@ public class Order {
 
     public Cart getCartForThisOrder() {
         return cart;
+    }
+
+    public int getNumItemsInCart() {
+
+        int numberOfItems = 0;
+        for(CartItem item : cart.getCart().values()) {
+            if (item.getPurchaseCategory() == ePurchaseCategory.QUANTITY) {
+                numberOfItems += Math.round(item.getItemAmount());
+            }
+            if (item.getPurchaseCategory() == ePurchaseCategory.WEIGHT) {
+                numberOfItems++;
+            }
+        }
+
+        return numberOfItems;
     }
 
 
