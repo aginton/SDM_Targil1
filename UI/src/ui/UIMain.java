@@ -42,7 +42,7 @@ public class UIMain {
         while (!wantsToQuit) {
             System.out.println("");
             showPossibleCommands(isSDMLoaded);
-            operator = scanner.nextLine().toLowerCase();
+            operator = scanner.nextLine().toLowerCase().trim();
             switch (operator) {
 
                 case "1":
@@ -89,17 +89,14 @@ public class UIMain {
 
                 case "6":
                     if (isSDMLoaded){
-                        printDetailsOfSDM(sdmInstance.getSuperDuperMarketDescriptor());
+                        updateInventoryForStore(sdmInstance);
+
                     }
                     break;
 
                 case "q":
                     System.out.println("Goodbye!");
                     return;
-
-                case "9":
-                    //testThisMethod(sdmInstance);
-                    break;
 
                 default:
                     System.out.println("Invalid input. " + operator + " does not correspond to any command!");
@@ -109,6 +106,105 @@ public class UIMain {
         }
     }
 
+    private static void updateInventoryForStore(SDM sdmInstance) {
+        Store storeChoice = null;
+        List<Store> listOfStores = sdmInstance.getStores();
+        Scanner in = new Scanner(System.in);
+
+
+        //1. Show stores and ask user for Store id
+        int userInput = getStoreIdFromUser(sdmInstance);
+        if (userInput == -1) {
+            return;
+        }
+        storeChoice = listOfStores.get(userInput - 1);
+
+        //2. Ask user if they want to add new item, delete item, or update price for existing item in storeChoice
+        while (true){
+            System.out.println("\nStore: " + storeChoice.getStoreName());
+            System.out.println("To add an existing item to this stores inventory, enter 'add'. ");
+            System.out.println("To update price of item in this store's inventory, enter 'update'");
+            System.out.println("To remove an item from store's inventory, enter 'remove'");
+            System.out.println("When finished, enter 'Q'");
+            System.out.println("=======================================================================");
+
+            String input = in.nextLine().trim().toLowerCase();
+            switch (input){
+                case "add":
+                    addExistingItemToStoreInventory(sdmInstance, storeChoice);
+                    break;
+
+                case "update":
+
+                    break;
+
+                case "remove":
+
+                    break;
+
+                case "q":
+                    return;
+
+                default:
+                    System.out.println("Invalid input! ):");
+            }
+
+        }
+
+        //3.
+    }
+
+    private static void addExistingItemToStoreInventory(SDM sdmInstance, Store storeChoice) {
+        Boolean isValidChoice = false, isValidPrice = false;
+        Inventory inventory = sdmInstance.getInventory();
+        List<Integer> existingInventoryItemIds = inventory.getListOfInventoryItemIds();
+        InventoryItem chosenItem = null;
+
+        while (!isValidChoice){
+            System.out.printf("Enter Item-Id for product you wish to add to %s's inventory:\n", storeChoice.getStoreName());
+            printPriceTableForStore(sdmInstance, storeChoice);
+            int choice = getIntFromUser();
+            if (choice == -1)
+                return;
+
+            if (existingInventoryItemIds.contains(choice)){
+                chosenItem = inventory.getInventoryItemById(choice);
+                if (inventory.getMapItemsToStoresWithItem().get(chosenItem).contains(storeChoice)){
+                    System.out.printf("Store %s already sells item %d (%s)!\n", storeChoice.getStoreName(), chosenItem.getInventoryItemId(), chosenItem.getItemName());
+                }
+                else{
+                    isValidChoice = true;
+                }
+            }
+            else {
+                if (choice != -2)
+                    System.out.println("Error: No item with id = " + choice + " exists in system!");
+            }
+        }
+
+        int price = 0;
+        while (!isValidPrice){
+            System.out.println("What is price for item? Please enter a positive integer:");
+            price = getIntFromUser();
+            if (price == -1)
+                return;
+
+            else if (price != -2){
+                if (price <0){
+                    System.out.println("Invalid input: Price must be a positive integer:");
+                }
+                else
+                    isValidPrice = true;
+            }
+        }
+
+        System.out.printf("Adding item: %s (id=%d) to %s's inventory, at price=%d\n",
+                chosenItem.getItemName(), chosenItem.getInventoryItemId(), storeChoice.getStoreName() ,price);
+
+//        //ask user to enter ID for item to purchase
+//        int priceID = getPriceIdFromUser(sdmInstance, storeChoice);
+//
+    }
 
 
     private static void viewOrderHistory(SDM sdmInstance) {
@@ -180,10 +276,13 @@ public class UIMain {
 
         //4. Choosing items to buy
         while (true) {
-            System.out.println("\nTo confirm cart purchase, enter 'confirm'. To add an item to your cart, enter 'add'. To cancel order, enter 'Q'");
+            System.out.println("\nTo add an item to your cart, enter 'add'. To confirm cart purchase, enter 'confirm'. To cancel order, enter 'Q'");
             System.out.println("=======================================================================");
             System.out.println("Store: " + storeChoice.getStoreName());
-            System.out.println("Order Date: " + orderDate);
+//            System.out.println("Order Date: " + orderDate);
+
+            //Explains how to format date: https://www.tutorialspoint.com/Date-Formatting-Using-printf
+            System.out.printf("Order Date: %1$td/%1$tm %1$tH:%1$tM\n", orderDate);
             System.out.println("My location: (" + userLocation.get(0) + ", " + userLocation.get(1) + ")");
             System.out.println("\nCart summary:");
             printCartDetails(cart);
@@ -194,14 +293,18 @@ public class UIMain {
 
             System.out.println("");
 
-            input = in.nextLine();
-            switch (input.toLowerCase()){
+            input = in.nextLine().trim();
+            switch (input.toLowerCase().trim()){
                 case "confirm":
-                    System.out.println("Order confirmed! (:");
+                    if (!cart.getCart().isEmpty()){
+                        System.out.println("Order confirmed! (:");
 
-                    Order order = new Order(storeChoice, userLocation, orderDate, deliveryCost, cart);
-                    sdmInstance.addNewOrder(storeChoice, order);
-                    return;
+                        Order order = new Order(storeChoice, userLocation, orderDate, deliveryCost, cart);
+                        sdmInstance.addNewOrder(storeChoice, order);
+                        return;
+                    }
+                    System.out.println("Cannot place an order for an empty cart!");
+                    break;
 
                 case "add":
                     //ask user to enter ID for item to purchase
@@ -223,7 +326,9 @@ public class UIMain {
                     break;
 
                 case "q":
-                    return;
+                    if (checkUserWantsToCancelOrder())
+                        return;
+                    break;
 
                 default:
                     System.out.println("Invalid input! ):");
@@ -264,8 +369,66 @@ public class UIMain {
             });
         }
     }
+//
+//
+//    private static Date getOrderDateFromUser() {
+//
+//        Date date = new Date();
+//        String s1 = "";
+//        Boolean isCorrectDateFormat = false;
+//
+//        SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM");
+//        SimpleDateFormat timeFormat = new SimpleDateFormat("hh:mm");
+//        Scanner in = new Scanner(System.in);
+//
+//
+//        while (true) {
+//            try {
+//                if (!isCorrectDateFormat){
+//
+//                    System.out.printf("isCorrectDateFormat=false. Value of s1: %s\n", s1);
+//                    System.out.println("Please enter day/month delivery as dd/MM");
+//
+//                    String input = in.nextLine().trim();
+//                    System.out.println("Value of input: " + input);
+//                    if (input.equalsIgnoreCase("q")){
+//                        if (checkUserWantsToCancelOrder())
+//                            return null;
+//                    }
+//                    if (dateFormat.parse(input) != null){
+//                        System.out.printf("Entered dateFormat correct block. Value of s1: %s\n", s1);
+//                        s1 = s1.concat(input);
+//                        isCorrectDateFormat = true;
+//                    }
+//                }
+//                else {
+//                    System.out.printf("isCorrectDateFormat = %b. Value of s1: %s\n", isCorrectDateFormat, s1);
+//
+//                    System.out.println("Please enter time for delivery as hh:mm");
+//                    String input = in.nextLine().trim();
+//                    System.out.printf("Value of input: %s\n", input);
+//
+//                    if (input.equalsIgnoreCase("q")){
+//                        if (checkUserWantsToCancelOrder())
+//                            return null;
+//                    }
+//                    if (timeFormat.parse(input) != null){
+//                        s1 = s1.concat(" ");
+//                        s1 = s1.concat(input);
+//                        System.out.printf("Entered timeFormat correct block. Value of s1: %s\n",s1);
+//                        date = new SimpleDateFormat("dd/MM hh:mm").parse(s1);
+//                        return date;
+//                    }
+//                }
+//
+//
+//            } catch (ParseException e) {
+//                System.out.println("Parsing exception!");
+//            }
+//        }
+//    }
 
-
+    ///Old version of getOrderDate:
     private static Date getOrderDateFromUser() {
 
         Date date = new Date();
@@ -295,21 +458,6 @@ public class UIMain {
         }
     }
 
-    public Date validateDateFormat(String dateToValdate, String formatToValidate) {
-
-        SimpleDateFormat formatter = new SimpleDateFormat("dd/MM HH:mm");
-        //To make strict date format validation
-        formatter.setLenient(false);
-        Date parsedDate = null;
-        try {
-            parsedDate = formatter.parse(dateToValdate);
-            System.out.println("++validated DATE TIME ++" + formatter.format(parsedDate));
-
-        } catch (ParseException e) {
-            //Handle exception
-        }
-        return parsedDate;
-    }
 
 
     private static int getPriceIdFromUser(SDM sdm, Store storeChoice) {
@@ -332,7 +480,7 @@ public class UIMain {
                 return -1;
 
             if (!existingItems.contains(priceId)) {
-                System.out.println("aaaaaaaa");
+                //System.out.println("aaaaaaaa");
                 System.out.println("Invalid input: No reference found for itemId=" + priceId);
             } else if (existingItems.contains(priceId) && !storeItemIds.contains(priceId)) {
                 System.out.println("The item you selected is not currently available at this store. ");
@@ -398,11 +546,14 @@ public class UIMain {
                 if (userInput == -1)
                     return -1;
 
-                if (!storeIds.contains(userInput))
-                    System.out.println("Invalid Input: could not find existing store with id " + userInput);
+                //userInput==-2 means user entered "q", and then entered "n"
+                if (userInput != -2){
+                    if (!storeIds.contains(userInput))
+                        System.out.println("Invalid Input: could not find existing store with id " + userInput);
 
-                else if (storeIds.contains(userInput))
-                    return userInput;
+                    else if (storeIds.contains(userInput))
+                        return userInput;
+                }
 
             } catch (InputMismatchException e) {
                 System.out.println("Invalid input!");
@@ -468,11 +619,12 @@ public class UIMain {
     }
 
 
+
     private static boolean checkUserWantsToCancelOrder() {
         Scanner in = new Scanner(System.in);
         while (true) {
-            System.out.println("Cancel operation? (Y/N)");
-            String input = in.nextLine();
+            System.out.println("Cancel current operation? (Y/N)");
+            String input = in.nextLine().trim();
             if (input.equalsIgnoreCase("y"))
                 return true;
 
@@ -508,7 +660,7 @@ public class UIMain {
 
             } catch (InputMismatchException e) {
                 System.out.println("Invalid input!");
-                in.nextLine();
+                in.nextLine().trim();
             }
         }
     }
@@ -524,12 +676,13 @@ public class UIMain {
         while (true) {
             try {
                 comingFromCancel = false;
-                userInputStr = in.nextLine();
+                userInputStr = in.nextLine().trim();
                 if (userInputStr.equalsIgnoreCase("q")) {
                     if (checkUserWantsToCancelOrder()) {
                         return -1;
                     }
                     comingFromCancel = true;
+                    return -2;
                 }
                 userInput = Integer.parseInt(userInputStr);
                 break;
@@ -537,7 +690,7 @@ public class UIMain {
                 System.out.println("Invalid input!");
             } catch (NumberFormatException nfe) {
                 if (!comingFromCancel) {
-                    System.out.println("Invalid input: Please only enter whole numbers, or 'Q' to quit");
+                    System.out.println("Invalid input: Please only enter whole numbers, or 'Q' to cancel current operation");
                     comingFromCancel = false;
                 }
             }
@@ -592,7 +745,7 @@ public class UIMain {
 
     private static void viewOrdersForStore(Store store) {
         List<Order> orders = store.getOrders();
-        System.out.println("\nOrders: ");
+        //System.out.println("\nOrders: ");
         if (orders.isEmpty()){
             System.out.println("No orders yet for store " + store.getStoreId());
         } else{
@@ -669,9 +822,8 @@ public class UIMain {
             System.out.println("3) View all items in system");
             System.out.println("4) Place an order");
             System.out.println("5) View Order History");
-            System.out.println("6) Print File Details");
+            System.out.println("6) Update Inventory for store");
             System.out.println("Q) Quit");
-            System.out.println("9) Test Method");
         }
     }
 
@@ -684,7 +836,7 @@ public class UIMain {
         while (true) {
             try {
                 System.out.println("Enter file path. Press 'Q' to cancel anytime: ");
-                String fileName = in.nextLine();
+                String fileName = in.nextLine().trim();
 
                 if (fileName.equalsIgnoreCase("q"))
                     return "q";

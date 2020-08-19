@@ -50,6 +50,7 @@ public class SDM {
                     System.out.println("About to create stores");
                     createStores(sdm);
                     System.out.println("\nAll stores created!\n\n");
+                    Order.setNumOfOrders(1);
 
                     inventory.updateStoresCarryingItems(stores);
                     inventory.updateAvePrice();
@@ -69,8 +70,7 @@ public class SDM {
 
 
     private void createInventory(SuperDuperMarketDescriptor sdm) {
-        if (inventory == null)
-            inventory = new Inventory();
+        inventory = new Inventory();
 
         for (SDMItem sdmItem: sdm.getSDMItems().getSDMItem()){
             InventoryItem item = new InventoryItem(sdmItem);
@@ -79,9 +79,7 @@ public class SDM {
     }
 
     public void createStores(SuperDuperMarketDescriptor sdm){
-        if (stores == null){
-            stores = new ArrayList<Store>();
-        }
+        stores = new ArrayList<Store>();
 
         for (SDMStore store: sdm.getSDMStores().getSDMStore()){
             List<Integer> storeLoc = new ArrayList<>();

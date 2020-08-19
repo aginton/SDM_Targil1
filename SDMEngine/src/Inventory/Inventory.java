@@ -6,6 +6,7 @@ import Orders.Order;
 import Store.Store;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class Inventory {
 
@@ -25,10 +26,6 @@ public class Inventory {
     }
 
 
-//    public HashMap<InventoryItem, Integer> getMapItemsToTotalSold() {
-//        return mapItemsToTotalSold;
-//    }
-
     public void addNewItemToInventory(InventoryItem item) {
         System.out.println("Just entered addNewItemToInventory() for item " + item.getInventoryItemId());
         System.out.println("Result of setInventoryItems.contains(item): " + listInventoryItems.contains(item));
@@ -38,15 +35,6 @@ public class Inventory {
         mapItemsToTotalSold.put(item, 0f);
         mapItemsToAvePrice.put(item, 0f);
         mapItemsToStoresWithItem.put(item, new HashSet<Store>());
-
-//        if (!listInventoryItems.contains(item)) {
-//            System.out.println("Entered not if clause");
-//            listInventoryItems.add(item);
-//            mapItemsToTotalSold.put(item, 0f);
-//            System.out.println("Added item " + item.getInventoryItemId() + "");
-//            return;
-//        }
-//        System.out.println("Error: this item already is in inventory!");
     }
 
 
@@ -130,5 +118,10 @@ public class Inventory {
            }
            mapItemsToStoresWithItem.put(item, setOfStores);
         }
+    }
+
+
+    public List<Integer> getListOfInventoryItemIds(){
+        return listInventoryItems.stream().map(item-> item.getInventoryItemId()).collect(Collectors.toList());
     }
 }

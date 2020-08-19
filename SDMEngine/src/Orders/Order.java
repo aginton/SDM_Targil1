@@ -12,6 +12,11 @@ import java.util.Objects;
 
 public class Order {
     private static int numOfOrders = 1;
+
+    public static void setNumOfOrders(int numOfOrders) {
+        Order.numOfOrders = numOfOrders;
+    }
+
     private int orderId;
     private List<Integer> userLocation;
     private Date orderDate;
