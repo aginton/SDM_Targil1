@@ -19,7 +19,7 @@ public class InventoryItem implements Comparable<InventoryItem> {
         this.inventoryItemId = item.getId();
         this.itemName = item.getName();
         this.purchaseCategory = ePurchaseCategory.valueOf(item.getPurchaseCategory().toUpperCase());
-        System.out.printf("Created InventoryItem %d!", inventoryItemId);
+        //System.out.printf("Created InventoryItem %d!", inventoryItemId);
     }
 
     public InventoryItem(InventoryItem item){

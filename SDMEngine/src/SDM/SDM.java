@@ -43,13 +43,13 @@ public class SDM {
                 if (isSDMValidAppWise(sdm)) {
                     mySDM = sdm;
                     //First create each inventory item
-                    System.out.println("About to create inventory");
+                    //System.out.println("About to create inventory");
                     createInventory(sdm);
-                    System.out.println("\nAll inventory items created!\n\n");
+                    //System.out.println("\nAll inventory items created!\n\n");
 
-                    System.out.println("About to create stores");
+                    //System.out.println("About to create stores");
                     createStores(sdm);
-                    System.out.println("\nAll stores created!\n\n");
+                    //System.out.println("\nAll stores created!\n\n");
                     Order.setNumOfOrders(1);
 
                     inventory.updateStoresCarryingItems(stores);
@@ -267,14 +267,20 @@ public class SDM {
     }
 
     public void addNewOrder(Store storeChoice, Order order) {
-        System.out.println("About to add order to storeChoice");
+        //System.out.println("About to add order to storeChoice");
         storeChoice.addOrder(order);
-        System.out.println("Successfully added order to storeChoice!\n");
+        //System.out.println("Successfully added order to storeChoice!\n");
 
-        System.out.println("About to add order to orderHistory");
+        //System.out.println("About to add order to orderHistory");
         orderHistory.addOrder(order);
 
         inventory.updateSalesMap(order);
-        System.out.println("Successfully added order to orderHistory!\n");
+        //System.out.println("Successfully added order to orderHistory!\n");
+    }
+
+    public void addInventoryItemToStore(InventoryItem item, Store store, int price){
+        store.addItemToStoreInventory(item, price);
+        inventory.updateStoresCarryingItems(stores);
+        inventory.updateAvePrice();
     }
 }

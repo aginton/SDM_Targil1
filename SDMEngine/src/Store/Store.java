@@ -48,7 +48,7 @@ public class Store {
         }
 
         this.orders = new ArrayList<>();
-        System.out.println("Successfully created store " + storeId + "!");
+        //System.out.println("Successfully created store " + storeId + "!");
     }
 
     public List<InventoryItem> getInventoryItems() {
@@ -102,8 +102,8 @@ public class Store {
     }
 
     public void addOrder(Order order) {
-        System.out.println("\nEntered Store.addOrder()");
-        System.out.println("about to call orders.add(order)");
+        //System.out.println("\nEntered Store.addOrder()");
+        //System.out.println("about to call orders.add(order)");
         orders.add(order);
         setTotalDeliveryIncome(order.getDeliveryCost()+this.getTotalDeliveryIncome());
         updateStoreInventory(order.getCartForThisOrder());
@@ -124,10 +124,18 @@ public class Store {
             if (item.getInventoryItemId() == priceID)
                 return item;
         }
-        System.out.println("Error: No such itemId exists in store inventory!");
+        System.out.printf("Error: No such itemId exists in %s's inventory!", getStoreName());
         return null;
     }
 
+    public void addItemToStoreInventory(InventoryItem item, int price){
+        if (inventoryItems.contains(item)){
+            return;
+        }
+        inventoryItems.add(item);
+        mapItemsToAmountSold.put(item.getInventoryItemId(), 0f);
+        mapItemToPrices.put(item.getInventoryItemId(), price);
+    }
 
     @Override
     public boolean equals(Object o) {

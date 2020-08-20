@@ -27,11 +27,11 @@ public class Inventory {
 
 
     public void addNewItemToInventory(InventoryItem item) {
-        System.out.println("Just entered addNewItemToInventory() for item " + item.getInventoryItemId());
-        System.out.println("Result of setInventoryItems.contains(item): " + listInventoryItems.contains(item));
+        //System.out.println("Just entered addNewItemToInventory() for item " + item.getInventoryItemId());
+        //System.out.println("Result of setInventoryItems.contains(item): " + listInventoryItems.contains(item));
 
         listInventoryItems.add(item);
-        System.out.println("Added item " + item.getInventoryItemId() + "");
+        //System.out.println("Added item " + item.getInventoryItemId() + "");
         mapItemsToTotalSold.put(item, 0f);
         mapItemsToAvePrice.put(item, 0f);
         mapItemsToStoresWithItem.put(item, new HashSet<Store>());
@@ -113,7 +113,7 @@ public class Inventory {
         for(InventoryItem item : listInventoryItems) {
             Set<Store> setOfStores = mapItemsToStoresWithItem.get(item);
            for(Store store : stores) {
-               if (store.getInventoryItems().contains(item)) 
+               if (!setOfStores.contains(item) && store.getInventoryItems().contains(item))
                    setOfStores.add(store);
            }
            mapItemsToStoresWithItem.put(item, setOfStores);
@@ -124,4 +124,9 @@ public class Inventory {
     public List<Integer> getListOfInventoryItemIds(){
         return listInventoryItems.stream().map(item-> item.getInventoryItemId()).collect(Collectors.toList());
     }
+
+    public List<InventoryItem> getListOfItemsNotSoldByStore(Store store){
+        return listInventoryItems.stream().filter( item-> !mapItemsToStoresWithItem.get(item).contains(store)).collect(Collectors.toList());
+    }
+
 }
