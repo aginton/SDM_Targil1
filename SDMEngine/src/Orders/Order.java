@@ -69,20 +69,20 @@ public class Order {
         return cart;
     }
 
-    public int getNumItemsInCart() {
 
-        int numberOfItems = 0;
-        for(CartItem item : cart.getCart().values()) {
-            if (item.getPurchaseCategory() == ePurchaseCategory.QUANTITY) {
-                numberOfItems += Math.round(item.getItemAmount());
-            }
-            if (item.getPurchaseCategory() == ePurchaseCategory.WEIGHT) {
-                numberOfItems++;
-            }
-        }
 
-        return numberOfItems;
-    }
+
+
+
+
+
+
+
+
+
+
+
+
 
 
     //TODO: Make a static method that calculates the delivery cost and returns value

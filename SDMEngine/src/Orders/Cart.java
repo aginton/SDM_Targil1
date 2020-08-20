@@ -1,19 +1,46 @@
 package Orders;
 
+import Inventory.ePurchaseCategory;
+
 import java.util.HashMap;
 
 public class Cart {
 
     private HashMap<Integer,CartItem> cart;
-    private float cartTotalPrice;
+    private float cartTotalPrice = 0;
 
     public Cart() {
         this.cart = new HashMap<Integer,CartItem>();
         cartTotalPrice = 0f;
     }
 
+    public int getNumberOfTypesOfItemsInCart()
+    {
+        return cart.size();
+    }
+
+    public int getNumItemsInCart() {
+
+        int numberOfItems = 0;
+        for(CartItem item : cart.values()) {
+            if (item.getPurchaseCategory() == ePurchaseCategory.QUANTITY) {
+                numberOfItems += Math.round(item.getItemAmount());
+            }
+            if (item.getPurchaseCategory() == ePurchaseCategory.WEIGHT) {
+                numberOfItems++;
+            }
+        }
+
+        return numberOfItems;
+    }
+
     public HashMap<Integer,CartItem> getCart() {
         return cart;
+    }
+
+    public boolean isEmpty()
+    {
+        return cart.isEmpty();
     }
 
     public float getCartTotalPrice() {
