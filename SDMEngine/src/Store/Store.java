@@ -6,10 +6,7 @@ import Orders.Order;
 import jaxb.schema.generated.SDMSell;
 import jaxb.schema.generated.SDMStore;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 public class Store {
 
@@ -130,6 +127,7 @@ public class Store {
             return;
         }
         inventoryItems.add(item);
+        Collections.sort(inventoryItems);
         mapItemsToAmountSold.put(item.getInventoryItemId(), 0f);
         mapItemToPrices.put(item.getInventoryItemId(), price);
     }
