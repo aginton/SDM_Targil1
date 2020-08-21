@@ -637,7 +637,7 @@ public class UIMain {
         prompt = prompt.concat("\n----------------------------------------------------------------");
 
 
-        //TODO: maybe change structure of inventory to hold items instead?
+        //TODO: maybe change structure of Store Inventory to hold CartItems instead?
         //Create string listing items and their details
         for (InventoryItem item : fullInventory) {
             boolean isSoldAtStore = storeInventory.contains(item);

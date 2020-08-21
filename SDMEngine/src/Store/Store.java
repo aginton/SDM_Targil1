@@ -21,8 +21,6 @@ public class Store {
         this.totalDeliveryIncome = totalDeliveryIncome;
     }
 
-    //TODO: implement totalItemsSold or get rid of it altogether
-    //protected int totalItemsSold;
     private float totalDeliveryIncome;
     private HashMap<Integer, Float> mapItemsToAmountSold;
     private HashMap<Integer, Integer> mapItemToPrices;
@@ -109,7 +107,6 @@ public class Store {
         updateStoreInventory(order.getCartForThisOrder());
     }
 
-    //TODO: Check if amountSold for weight is also only counted as 1 for each order, or if record using floats
     //assuming storing amountSold as float
     private void updateStoreInventory(Cart cart) {
         cart.getCart().forEach((k, v) -> {
@@ -142,18 +139,29 @@ public class Store {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Store store = (Store) o;
+
+        //TODO: Make sure that this equals implementation is okay (i.e., that we can define equals based only on immutable fields (id, name, userlocation, ppk))
         return storeId == store.storeId &&
                 deliveryPpk == store.deliveryPpk &&
                 storeName.equals(store.storeName) &&
-                Objects.equals(storeLocation, store.storeLocation) &&
-                Objects.equals(inventoryItems, store.inventoryItems) &&
-                Objects.equals(mapItemsToAmountSold, store.mapItemsToAmountSold) &&
-                Objects.equals(mapItemToPrices, store.mapItemToPrices) &&
-                Objects.equals(orders, store.orders);
+                Objects.equals(storeLocation, store.storeLocation);
+
+        /*Original version:*/
+//        return storeId == store.storeId &&
+//                deliveryPpk == store.deliveryPpk &&
+//                storeName.equals(store.storeName) &&
+//                Objects.equals(storeLocation, store.storeLocation) &&
+//                Objects.equals(inventoryItems, store.inventoryItems) &&
+//                Objects.equals(mapItemsToAmountSold, store.mapItemsToAmountSold) &&
+//                Objects.equals(mapItemToPrices, store.mapItemToPrices) &&
+//                Objects.equals(orders, store.orders);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(storeId, storeName, storeLocation, deliveryPpk, inventoryItems);
+
+        return Objects.hash(storeId, storeName, storeLocation, deliveryPpk);
+        //Original:
+//        return Objects.hash(storeId, storeName, storeLocation, deliveryPpk, inventoryItems);
     }
 }

@@ -71,21 +71,5 @@ public class Order {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     //TODO: Make a static method that calculates the delivery cost and returns value
-
-
 }
