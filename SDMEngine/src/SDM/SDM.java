@@ -278,9 +278,16 @@ public class SDM {
         //System.out.println("Successfully added order to orderHistory!\n");
     }
 
+
     public void addInventoryItemToStore(InventoryItem item, Store store, int price){
         store.addItemToStoreInventory(item, price);
         inventory.updateStoresCarryingItems(stores);
+        inventory.updateAvePrice();
+    }
+
+    public void removeItemFromStore(InventoryItem chosenItem, Store storeChoice) {
+        storeChoice.getInventoryItems().remove(chosenItem);
+        inventory.getMapItemsToStoresWithItem().get(chosenItem).remove(storeChoice);
         inventory.updateAvePrice();
     }
 }

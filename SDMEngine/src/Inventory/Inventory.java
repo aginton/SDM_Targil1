@@ -120,6 +120,10 @@ public class Inventory {
         }
     }
 
+    public boolean canItemBeRemovedFromStore(InventoryItem item, Store store){
+        return mapItemsToStoresWithItem.get(item).contains(store);
+    }
+
 
     public List<Integer> getListOfInventoryItemIds(){
         return listInventoryItems.stream().map(item-> item.getInventoryItemId()).collect(Collectors.toList());
