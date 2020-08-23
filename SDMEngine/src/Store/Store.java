@@ -162,4 +162,18 @@ public class Store {
         //Original:
 //        return Objects.hash(storeId, storeName, storeLocation, deliveryPpk, inventoryItems);
     }
+
+    public float getDeliveryCost(List<Integer> userLocation) {
+        return deliveryPpk* getDistance(userLocation, getStoreLocation());
+    }
+
+    public static float getDistance(List<Integer> userLocation, List<Integer> storeLocation) {
+        if (userLocation.size() != 2 || storeLocation.size() != 2){
+            System.out.println("Error: Input lists must each contain 2 points!");
+            return -1;
+        }
+        int xDelta = userLocation.get(0) -storeLocation.get(0);
+        int yDelta = userLocation.get(1) -storeLocation.get(1);
+        return (float) Math.sqrt((xDelta*xDelta)+(yDelta*yDelta));
+    }
 }
