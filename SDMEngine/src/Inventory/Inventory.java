@@ -43,7 +43,6 @@ public class Inventory {
             if (item.getInventoryItemId() == id)
                 return item;
         }
-        System.out.println("Error: No such id found in inventory!");
         return null;
     }
 

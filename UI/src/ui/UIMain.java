@@ -256,17 +256,32 @@ public class UIMain {
                 int orderId = order.getOrderId();
                 Date orderDate = order.getOrderDate();
                 String date = new SimpleDateFormat("dd/MM\tHH:mm").format(orderDate);
-                int storeId = order.getStore().getStoreId();
-                String storeName = order.getStore().getStoreName();
+                //TODO: if static (only one store) show id and store name. if dynamic, do not show these details.
+
+                boolean isStaticOrder = order.getStoresBoughtFrom().size() == 1;
+
+                if (isStaticOrder) {
+                    //static order
+                    Iterator<Store> iterator = order.getStoresBoughtFrom().iterator();
+                    int storeId = iterator.next().getStoreId();
+                    String storeName = iterator.next().getStoreName();
+
+                    System.out.printf("| Order-id: %d | %-10s | Store-Id: %-5d | %-13s |\n\n", orderId, date, storeId, storeName);
+                }
+                else {
+                    //dynamic order
+                    System.out.printf("| Order-id: %d | %-10s |\n\n", orderId, date);
+                }
+
                 float deliveryCost = order.getDeliveryCost();
                 Cart cart = order.getCartForThisOrder();
                 float cartTotal = cart.getCartTotalPrice();
                 float total = cartTotal + deliveryCost;
 
-                System.out.printf("| Order-id: %d | %-10s | Store-Id: %-5d | %-13s |\n\n", orderId, date, storeId, storeName);
-                printCartDetails(cart);
+                printCartDetailsForStaticOrder(cart);
                 System.out.printf("\nTotal number of items: %d", order.getCartForThisOrder().getNumItemsInCart());
                 System.out.printf("\nTotal types of items: %d", order.getCartForThisOrder().getNumberOfTypesOfItemsInCart());
+                System.out.printf("\nTotal number of stores: %d", order.getNumberOfStoresInvolved());
                 System.out.println("\nSubtotal: " + cartTotal);
                 System.out.printf("Delivery fee: %.2f\n", deliveryCost);
                 System.out.println("----------------");
@@ -289,7 +304,135 @@ public class UIMain {
 //    }
 
 
-    private static void placeAnOrder(SDM sdmInstance) {
+    private static void
+    placeAnOrder(SDM sdmInstance) {
+
+        Scanner in = new Scanner(System.in);
+        int typeOfOrderInput;
+
+        //1. Ask user if static or dynamic order
+        System.out.println("Would you like a static order or dynamic order? Choose number of option");
+        System.out.println("1. Static order");
+        System.out.println("2. Dynamic order");
+
+        typeOfOrderInput = in.nextInt();
+
+        switch (typeOfOrderInput) {
+            case 1: {
+                placeAStaticOrder(sdmInstance);
+                break;
+            }
+            case 2: {
+                placeADynamicOrder(sdmInstance);
+                break;
+            }
+            default:
+                System.out.println("Error: Invalid input");
+        }
+    }
+
+    public static void placeADynamicOrder (SDM sdmInstance) {
+
+        Scanner in = new Scanner(System.in);
+        String userInput;
+        int chosenItemId;
+        float amount;
+        HashMap<InventoryItem, Float> mapItemsChosenToAmount = new HashMap<InventoryItem, Float>();
+
+        //1. Ask user for date and time
+        Date orderDate = getOrderDateFromUser();
+        if (orderDate == null)
+            return;
+
+        //2. ask user for their location
+        List<Integer> userLocation = getUserLocation(sdmInstance);
+        if (userLocation.contains(-1))
+            return;
+
+        //3. Add items to cart
+        while (true) {
+            viewAllItemsInSystem(sdmInstance);
+            System.out.println("\nTo add an item to your cart, enter its id number. To cancel order, enter 'Q'");
+            System.out.println("To finish, enter 'finish'");
+            userInput = in.nextLine().trim();
+
+            if(userInput.equalsIgnoreCase("q")) {
+                return;
+            }
+
+            if (userInput.equalsIgnoreCase("finish")) {
+                break;
+            }
+
+            chosenItemId = Integer.parseInt(userInput);
+            InventoryItem itemChosen = sdmInstance.getInventory().getInventoryItemById(chosenItemId);
+            if (itemChosen == null) {
+                System.out.println("Error: No such id found in inventory!");
+            }
+
+            amount = getAmount(itemChosen.getPurchaseCategory());
+            mapItemsChosenToAmount.put(itemChosen,amount);
+        }
+
+        System.out.println("calculating the cheapest cart for you...");
+        Cart cart = sdmInstance.findCheapestCartForUser(mapItemsChosenToAmount);
+        Set<Store> storesBoughtFrom = cart.getStoresBoughtFrom();
+
+//        String pattern = "dd/MM HH:mm";
+//        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
+//        String formattedDate = simpleDateFormat.format(orderDate);
+        System.out.printf("Order Date: %1$td/%1$tm %1$tH:%1$tM\n", orderDate);
+        System.out.println("My location: (" + userLocation.get(0) + ", " + userLocation.get(1) + ")");
+        System.out.printf("Number Of Stores: %d\n", storesBoughtFrom.size());
+        System.out.println("\nCart summary:");
+        printCartDetailsForDynamicOrder(cart);
+        float deliveryCost = calculateDeliveryCostForDynamicOrder(storesBoughtFrom, userLocation);
+        System.out.printf("\nDelivery fee: %.2f", deliveryCost);
+        System.out.println("\nCart subtotal:" + cart.getCartTotalPrice());
+        System.out.print("----------------");
+        float total = cart.getCartTotalPrice() + deliveryCost;
+        System.out.printf("\nTotal: %.2f nis", total);
+        System.out.println("");
+
+        System.out.println("To confirm cart purchase, enter 'confirm'. To cancel order, enter 'Q'\"");
+        userInput = in.nextLine().trim();
+
+        switch (userInput.toLowerCase()) {
+            case "confirm":
+                if (!cart.getCart().isEmpty()) {
+                    System.out.println("Order confirmed! (:");
+
+                    Order order = new Order(userLocation, orderDate, deliveryCost, cart, storesBoughtFrom);
+                    sdmInstance.addNewDynamicOrder(storesBoughtFrom, order);
+                    return;
+                }
+                System.out.println("Cannot place an order for an empty cart!");
+                break;
+
+            case "q":
+                break;
+        }
+    }
+
+    private static float calculateDeliveryCostForDynamicOrder(Set<Store> storesBoughtFrom, List<Integer> userLocation) {
+
+        float deliveryCostSum = 0, distance;
+        List<Integer> storeLoc = new ArrayList<>();
+        int ppk;
+
+        for (Store store : storesBoughtFrom) {
+
+            storeLoc = store.getStoreLocation();
+            ppk = store.getDeliveryPpk();
+            distance = getDistance(userLocation,storeLoc);
+            deliveryCostSum += distance*ppk;
+        }
+
+        return deliveryCostSum;
+    }
+
+    public static void placeAStaticOrder(SDM sdmInstance) {
+
         Boolean isValidStore = false;
 
         List<Store> listOfStores = sdmInstance.getStores();
@@ -303,13 +446,9 @@ public class UIMain {
         Scanner in = new Scanner(System.in);
         String input;
 
-        //1. Show stores and ask user for Store id
-//
-//        userInput = getStoreIdFromUser(sdmInstance);
-
         System.out.println("\nWhich store would you like to order from? Please enter the store-id from the following options. Enter 'Q' at anytime to cancel order: ");
         //1. Show stores and ask user for Store id
-        while (!isValidStore){
+        while (!isValidStore) {
             printAvailableStores(sdmInstance);
             input = in.nextLine().trim();
             if (input.equalsIgnoreCase("q"))
@@ -320,7 +459,6 @@ public class UIMain {
             if (isValidStore)
                 storeChoice = listOfStores.get(Integer.parseInt(input) - 1);
         }
-
 
 
 //        storeChoice = listOfStores.get(userInput - 1);
@@ -337,39 +475,41 @@ public class UIMain {
             return;
 
         float distance = getDistance(userLocation, storeChoice.getStoreLocation());
-        float deliveryCost = distance*storeChoice.getDeliveryPpk();
+        float deliveryCost = distance * storeChoice.getDeliveryPpk();
 
         //4. Choosing items to buy
         while (true) {
             System.out.println("\nTo add an item to your cart, enter 'add'. To confirm cart purchase, enter 'confirm'. To cancel order, enter 'Q'");
             System.out.println("=======================================================================");
             System.out.println("Store: " + storeChoice.getStoreName());
-            String pattern = "dd/MM HH:mm";
-            SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
-            String formattedDate = simpleDateFormat.format(orderDate);
+//            String pattern = "dd/MM HH:mm";
+//            SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
+//            String formattedDate = simpleDateFormat.format(orderDate);
             //Explains how to format date: https://www.tutorialspoint.com/Date-Formatting-Using-printf
             System.out.printf("Order Date: %1$td/%1$tm %1$tH:%1$tM\n", orderDate);
             System.out.println("My location: (" + userLocation.get(0) + ", " + userLocation.get(1) + ")");
             System.out.printf("PPK: %d\n", storeChoice.getDeliveryPpk());
             System.out.printf("Distance from store: %.2f\n", distance);
             System.out.println("\nCart summary:");
-            printCartDetails(cart);
+            printCartDetailsForStaticOrder(cart);
             System.out.printf("\nDelivery fee: %.2f", deliveryCost);
             System.out.println("\nCart subtotal:" + cart.getCartTotalPrice());
             System.out.print("----------------");
-            float total = cart.getCartTotalPrice()+deliveryCost;
-            System.out.printf("\nTotal: %.2f nis",total);
+            float total = cart.getCartTotalPrice() + deliveryCost;
+            System.out.printf("\nTotal: %.2f nis", total);
 
             System.out.println("");
 
             input = in.nextLine().trim();
-            switch (input.toLowerCase()){
+            switch (input.toLowerCase()) {
                 case "confirm":
-                    if (!cart.getCart().isEmpty()){
+                    if (!cart.getCart().isEmpty()) {
                         System.out.println("Order confirmed! (:");
 
-                        Order order = new Order(storeChoice, userLocation, orderDate, deliveryCost, cart);
-                        sdmInstance.addNewOrder(storeChoice, order);
+                        Set<Store> storeOfThisOrder = new HashSet<Store>();
+                        storeOfThisOrder.add(storeChoice);
+                        Order order = new Order (userLocation, orderDate, deliveryCost, cart, storeOfThisOrder);
+                        sdmInstance.addNewStaticOrder(storeChoice, order);
                         return;
                     }
                     System.out.println("Cannot place an order for an empty cart!");
@@ -379,15 +519,15 @@ public class UIMain {
                     //ask user to enter ID for item to purchase
                     Boolean isValidPriceId = false;
 
-                    while (!isValidPriceId){
+                    while (!isValidPriceId) {
                         System.out.println("Please enter the Id for the item you wish to purchase. Enter 'cancel' to go back to previous menu: ");
-                        printPriceTableForStore(sdmInstance,storeChoice);
+                        printPriceTableForStore(sdmInstance, storeChoice);
                         input = in.nextLine().trim();
                         if (input.equalsIgnoreCase("cancel"))
                             break;
                         isValidPriceId = checkIfValidPriceId(sdmInstance, storeChoice, input);
                     }
-                    if (isValidPriceId){
+                    if (isValidPriceId) {
 //                        int priceID = getPriceIdFromUser(sdmInstance, storeChoice);
                         int priceID = Integer.parseInt(input);
 
@@ -399,7 +539,7 @@ public class UIMain {
                         InventoryItem itemChosen = storeChoice.getInventoryItemById(priceID);
 
                         amount = getAmount(itemChosen.getPurchaseCategory());
-                        CartItem cartItem = new CartItem(itemChosen, amount, price);
+                        CartItem cartItem = new CartItem(itemChosen, amount, price, storeChoice);
                         cart.add(cartItem);
                     }
                     break;
@@ -412,8 +552,6 @@ public class UIMain {
             }
         }
     }
-
-
 
     private static Date getOrderDateFromUser() {
         Date date = new Date();
@@ -444,7 +582,7 @@ public class UIMain {
         }
     }
 
-    private static float getDistance(List<Integer> userLocation, List<Integer> storeLocation) {
+    public static float getDistance(List<Integer> userLocation, List<Integer> storeLocation) {
         if (userLocation.size() != 2 || storeLocation.size() != 2){
             System.out.println("Error: Input lists must each contain 2 points!");
             return -1;
@@ -461,7 +599,7 @@ public class UIMain {
     //https://stackoverflow.com/questions/15961130/align-printf-output-in-java
 
 
-    private static void printCartDetails(Cart cart) {
+    private static void printCartDetailsForStaticOrder(Cart cart) {
 //        System.out.println("Just entered printCartDetails");
 //        System.out.println("Is myCart empty?: " + (myCart==null));
 
@@ -481,6 +619,28 @@ public class UIMain {
             System.out.println("Your cart is empty");
         }
     }
+
+    private static void printCartDetailsForDynamicOrder(Cart bestPriceCart) {
+
+        if (!bestPriceCart.isEmpty()) {
+            System.out.printf("| Item-Id | %-14s | Purchase-Category | %-19s | %-15s | Total Cost | Store-id |\n", "Item-Name", "Amount", "Best unit price");
+            System.out.println("---------------------------------------------------------------------------------");
+            bestPriceCart.getCart().forEach((k,v)->{
+                String name = v.getItemName();
+                ePurchaseCategory pCat = v.getPurchaseCategory();
+                float amount = v.getItemAmount();
+                int price = v.getPrice();
+                float itemTotalCost = price*amount;
+                int storeId = v.getStoreBoughtFrom().getStoreId();
+                System.out.printf("| %-7d | %-15s | %s | %-9.2f | %-11d nis | %-11.2f | %-7d |\n", k, name, pCat, amount, price, itemTotalCost, storeId);
+            });
+        }
+        else {
+            System.out.println("Your cart is empty");
+        }
+    }
+
+
 
 //    public Date validateDateFormat(String dateToValdate, String formatToValidate) {
 //
@@ -723,7 +883,7 @@ public class UIMain {
     }
 
     private static float getAmount(ePurchaseCategory purchaseCat) {
-        boolean isValidQuantity = false;
+        //boolean isValidQuantity = false;
         float res;
         Scanner in = new Scanner(System.in);
         DecimalFormat df;

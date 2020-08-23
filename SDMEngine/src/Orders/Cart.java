@@ -1,8 +1,11 @@
 package Orders;
 
 import Inventory.ePurchaseCategory;
+import Store.Store;
 
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 
 public class Cart {
 
@@ -67,5 +70,13 @@ public class Cart {
         }
         cart.put(id, cartItem);
 
+    }
+
+    public Set<Store> getStoresBoughtFrom() {
+
+        Set<Store> storesBoughtFrom = new HashSet<>();
+        cart.forEach((k,v) -> storesBoughtFrom.add(v.getStoreBoughtFrom()));
+
+        return storesBoughtFrom;
     }
 }

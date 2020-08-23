@@ -4,7 +4,10 @@ import Inventory.Inventory;
 import Inventory.InventoryItem;
 import Orders.Orders;
 import Orders.Order;
+import Orders.eOrderType;
 import Store.Store;
+import Orders.Cart;
+import Orders.CartItem;
 import jaxb.schema.generated.*;
 
 import javax.xml.bind.JAXBContext;
@@ -266,9 +269,10 @@ public class SDM {
         return res;
     }
 
-    public void addNewOrder(Store storeChoice, Order order) {
+    public void addNewStaticOrder(Store storeChoice, Order order) {
         //System.out.println("About to add order to storeChoice");
-        storeChoice.addOrder(order);
+            storeChoice.addOrder(order);
+
         //System.out.println("Successfully added order to storeChoice!\n");
 
         //System.out.println("About to add order to orderHistory");
@@ -278,9 +282,92 @@ public class SDM {
         //System.out.println("Successfully added order to orderHistory!\n");
     }
 
+    public void addNewDynamicOrder(Set <Store> storesBoughtFrom, Order order) {
+        //System.out.println("About to add order to storeChoice");
+
+        //Bought from multiple stores, add sub-orders to stores
+        addSplittedOrdersToStores(storesBoughtFrom, order);
+        //System.out.println("Successfully added order to storeChoice!\n");
+
+        //System.out.println("About to add order to orderHistory");
+        orderHistory.addOrder(order);
+
+        inventory.updateSalesMap(order);
+        //System.out.println("Successfully added order to orderHistory!\n");
+    }
+
+    private void addSplittedOrdersToStores(Set<Store> storesBoughtFrom, Order order) {
+
+        storesBoughtFrom.forEach(store -> {
+            Cart cartForStore = ExtractCartForStore(store, order);
+            float deliveryCostForStore = calculateDeliveryCostForStore(store.getDeliveryPpk(),
+                                                                       order.getUserLocation(),
+                                                                       store.getStoreLocation());
+            Set<Store> storeForThisSubOrder = new HashSet<Store>();
+            storeForThisSubOrder.add(store);
+            Order orderForStore = new Order(order.getUserLocation(),
+                                            order.getOrderDate(),
+                                            deliveryCostForStore,
+                                            cartForStore, storeForThisSubOrder);
+            store.addOrder(orderForStore);
+        });
+    }
+
+    private float calculateDeliveryCostForStore(int deliveryPpk, List<Integer> userLocation, List<Integer> storeLocation) {
+
+        int xDelta = userLocation.get(0) -storeLocation.get(0);
+        int yDelta = userLocation.get(1) -storeLocation.get(1);
+        float distance = (float) Math.sqrt((xDelta*xDelta)+(yDelta*yDelta)) ;
+
+        return distance*deliveryPpk;
+    }
+
+    private Cart ExtractCartForStore(Store store, Order order) {
+
+        Cart cartForStore = new Cart();
+
+        order.getCartForThisOrder().getCart().forEach((key,cartItem) -> {
+            if (cartItem.getStoreBoughtFrom() == store) {
+                cartForStore.add(cartItem);
+            }
+        });
+
+        return cartForStore;
+    }
+
     public void addInventoryItemToStore(InventoryItem item, Store store, int price){
         store.addItemToStoreInventory(item, price);
         inventory.updateStoresCarryingItems(stores);
         inventory.updateAvePrice();
+    }
+
+    public Cart findCheapestCartForUser(HashMap<InventoryItem, Float> mapItemsChosenToAmount) {
+
+        Cart cart = new Cart();
+
+        mapItemsChosenToAmount.forEach((item,amount) -> {
+           Store cheapestStore = findCheapestStoreForItem(item);
+           int cheapestPrice = cheapestStore.getMapItemToPrices().get(item.getInventoryItemId());
+           CartItem cartItem = new CartItem(item, amount, cheapestPrice, cheapestStore);
+           cart.add(cartItem);
+        });
+
+        return cart;
+    }
+
+    public Store findCheapestStoreForItem(InventoryItem item) {
+
+//        Comparator<Store> comparator = new Comparator<Store>() {
+//            @Override
+//            public int compare(Store o1, Store o2) {
+//                return o1.getMapItemToPrices().get(item.getInventoryItemId()).compareTo(o2.getMapItemToPrices().get(item.getInventoryItemId()));
+//            }
+//        };
+
+        Comparator<Store> comparator = (store1, store2) -> store1.getMapItemToPrices().get(item.getInventoryItemId()).compareTo(store2.getMapItemToPrices().get(item.getInventoryItemId()));
+        Set<Store> storesWithItem = inventory.getMapItemsToStoresWithItem().get(item);
+        Store cheapestStore = Collections.min(storesWithItem, comparator);
+
+        return cheapestStore;
     }
 }

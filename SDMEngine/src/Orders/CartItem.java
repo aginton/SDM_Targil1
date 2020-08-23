@@ -1,21 +1,20 @@
 package Orders;
 
+import Store.Store;
 import Inventory.InventoryItem;
-
 import java.util.Objects;
 
 public class CartItem extends InventoryItem {
     
     private float itemAmount;
     private int price;
+    Store storeBoughtFrom;
 
-    public CartItem(InventoryItem item, float amount, int price){
+    public CartItem(InventoryItem item, float amount, int price, Store storeBoughtFrom){
         super(item);
-        //this.itemId = item.getInventoryItemId();
-        //this.itemName = item.getItemName();
-        //this.purchaseCategory = item.getPurchaseCategory();
         this.itemAmount = amount;
         this.price = price;
+        this.storeBoughtFrom = storeBoughtFrom;
     }
 
 //    public int getItemId() {
@@ -44,6 +43,10 @@ public class CartItem extends InventoryItem {
 
     public int getPrice() {
         return price;
+    }
+
+    public Store getStoreBoughtFrom() {
+        return storeBoughtFrom;
     }
 
     @Override
