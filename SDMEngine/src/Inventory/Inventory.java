@@ -10,8 +10,6 @@ import java.util.stream.Collectors;
 
 public class Inventory {
 
-    //TODO: Check if this is number of units sold or number of orders containing item.
-    //for example, if in one order there are 5 toiler paper quantities, do we add 5 or 1?
     private List<InventoryItem> listInventoryItems;
     private HashMap<InventoryItem, Float> mapItemsToTotalSold;
     private HashMap<InventoryItem, Float> mapItemsToAvePrice;
@@ -92,7 +90,6 @@ public class Inventory {
     }
 
 
-    //TODO: change to streams
     public void updateAvePrice() {
 
         for(InventoryItem item : listInventoryItems) {
@@ -117,6 +114,10 @@ public class Inventory {
            }
            mapItemsToStoresWithItem.put(item, setOfStores);
         }
+    }
+
+    public boolean canItemBeRemovedFromStore(InventoryItem item, Store store){
+        return mapItemsToStoresWithItem.get(item).contains(store);
     }
 
 

@@ -84,4 +84,8 @@ public class InventoryItem implements Comparable<InventoryItem> {
         return this.getInventoryItemId() - o.getInventoryItemId();
         //return 0;
     }
+
+    //TODO: See how to sort list of InventoryItems based on itemIds
+    //https://stackoverflow.com/questions/13491450/java-sorting-user-defined-objects
+
 }

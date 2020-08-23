@@ -370,4 +370,10 @@ public class SDM {
 
         return cheapestStore;
     }
+
+    public void removeItemFromStore(InventoryItem chosenItem, Store storeChoice) {
+        storeChoice.getInventoryItems().remove(chosenItem);
+        inventory.getMapItemsToStoresWithItem().get(chosenItem).remove(storeChoice);
+        inventory.updateAvePrice();
+    }
 }

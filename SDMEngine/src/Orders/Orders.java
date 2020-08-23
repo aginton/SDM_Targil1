@@ -30,7 +30,7 @@ public class Orders {
             orders = new ArrayList<Order>();
 
         orders.add(order);
-        System.out.println("Order " + order.getOrderId() + " successfully added to Orders!");
+        //System.out.println("Order " + order.getOrderId() + " successfully added to Orders!");
     }
 
 }
