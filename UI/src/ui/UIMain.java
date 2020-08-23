@@ -738,7 +738,7 @@ public class UIMain {
     private static void printCartDetailsForDynamicOrder(Cart bestPriceCart) {
 
         if (!bestPriceCart.isEmpty()) {
-            System.out.printf("| Item-Id | %-14s | Purchase-Category | %-19s | %-15s | Total Cost | Store-id |\n", "Item-Name", "Amount", "Best unit price");
+            System.out.printf("| Item-Id | %-14s | Purchase-Category | %-19s | %-12s | Total Cost | Store-id |\n", "Item-Name", "Amount", "Best unit price");
             System.out.println("---------------------------------------------------------------------------------");
             bestPriceCart.getCart().forEach((k,v)->{
                 String name = v.getItemName();
@@ -747,7 +747,7 @@ public class UIMain {
                 int price = v.getPrice();
                 float itemTotalCost = price*amount;
                 int storeId = v.getStoreBoughtFrom().getStoreId();
-                System.out.printf("| %-7d | %-15s | %s | %-9.2f | %-11d nis | %-11.2f | %-7d |\n", k, name, pCat, amount, price, itemTotalCost, storeId);
+                System.out.printf("| %-7d | %-15s | %-20s | %-9.2f | %-11d nis | %-11.2f nis| %-7d |\n", k, name, pCat, amount, price, itemTotalCost, storeId);
             });
         }
         else {
