@@ -215,7 +215,7 @@ public class UIMain {
         //TODO: fix code duplication
         //2. Update price
         while (!isValidPrice){
-            System.out.printf("What price do you want to set for %s at store %s? Please enter a positive integer, or enter 'cancel' to go back to previous menu:\n", chosenItem.getItemName(), storeChoice.getStoreName());
+            System.out.printf("What price do you want to set for %s at store %s. Please enter a positive integer, or enter 'cancel' to go back to previous menu:\n", chosenItem.getItemName(), storeChoice.getStoreName());
             String input = in.nextLine().trim();
 
             if (input.equalsIgnoreCase("cancel"))
@@ -592,43 +592,62 @@ public class UIMain {
             return;
 
         float distance = getDistance(userLocation, storeChoice.getStoreLocation());
+
         float deliveryCost = distance * storeChoice.getDeliveryPpk();
 
         //4. Choosing items to buy
         while (true) {
-            System.out.println("\nTo add an item to your cart, enter 'add'. To confirm cart purchase, enter 'confirm'. To cancel current order, enter 'cancel'");
+            System.out.println("\nTo add an item to your cart, enter 'add'. \nWhen finished, enter 'checkout'. \nTo cancel current order, enter 'cancel'");
             System.out.println("==========================================================================================================================");
-            System.out.println("Store: " + storeChoice.getStoreName());
-//            String pattern = "dd/MM HH:mm";
-//            SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
-//            String formattedDate = simpleDateFormat.format(orderDate);
-            //Explains how to format date: https://www.tutorialspoint.com/Date-Formatting-Using-printf
-            System.out.printf("Order Date: %1$td/%1$tm %1$tH:%1$tM\n", orderDate);
-            System.out.println("My location: (" + userLocation.get(0) + ", " + userLocation.get(1) + ")");
-            System.out.printf("PPK: %d\n", storeChoice.getDeliveryPpk());
-            System.out.printf("Distance from store: %.2f\n", distance);
             System.out.println("\nCart summary:");
             printCartDetailsForStaticOrder(cart);
-            System.out.printf("\nDelivery fee: %.2f", deliveryCost);
-            System.out.println("\nCart subtotal:" + cart.getCartTotalPrice());
-            System.out.print("----------------");
-            float total = cart.getCartTotalPrice() + deliveryCost;
-            System.out.printf("\nTotal: %.2f nis", total);
 
-            System.out.println("");
+//            System.out.println("Store: " + storeChoice.getStoreName());
+//            //Explains how to format date: https://www.tutorialspoint.com/Date-Formatting-Using-printf
+//            System.out.printf("Order Date: %1$td/%1$tm %1$tH:%1$tM\n", orderDate);
+//            System.out.println("My location: (" + userLocation.get(0) + ", " + userLocation.get(1) + ")");
+//            System.out.printf("PPK: %d\n", storeChoice.getDeliveryPpk());
+//            System.out.printf("Distance from store: %.2f\n", distance);
+//            System.out.println("\nCart summary:");
+//            printCartDetailsForStaticOrder(cart);
+//            System.out.printf("\nDelivery fee: %.2f", deliveryCost);
+//            System.out.println("\nCart subtotal:" + cart.getCartTotalPrice());
+//            System.out.print("----------------");
+//            float total = cart.getCartTotalPrice() + deliveryCost;
+//            System.out.printf("\nTotal: %.2f nis", total);
+//
+//            System.out.println("");
 
-            input = in.nextLine().trim();
-            switch (input.toLowerCase()){
-                case "confirm":
-                    //TODO: "אם המשתמש ביקש לוותר על ההזמנה – חוזרים לתפריט הראשי, ואין לפעולה זו שום השלכה על המע'.
+            input = in.nextLine().toLowerCase().trim();
+            switch (input){
+                case "checkout":
                     if (!cart.getCart().isEmpty()){
-                        System.out.println("Order confirmed! (:");
+                        printCurrentOrderSummary(storeChoice, orderDate, userLocation, cart);
+                        System.out.println("To confirm order, enter 'confirm'. To cancel order and go back to main menu, enter 'q':");
+                        while (true){
+                            input = in.nextLine().toLowerCase().trim();
 
-                        Set<Store> storeOfThisOrder = new HashSet<Store>();
-                        storeOfThisOrder.add(storeChoice);
-                        Order order = new Order (userLocation, orderDate, deliveryCost, cart, storeOfThisOrder);
-                        sdmInstance.addNewStaticOrder(storeChoice, order);
-                        return;
+                            switch (input){
+                                case "confirm":
+                                    System.out.println("Order confirmed! (:");
+
+                                    Set<Store> storeOfThisOrder = new HashSet<Store>();
+                                    storeOfThisOrder.add(storeChoice);
+                                    Order order = new Order (userLocation, orderDate, deliveryCost, cart, storeOfThisOrder);
+                                    sdmInstance.addNewStaticOrder(storeChoice, order);
+                                    return;
+
+                                case "q":
+                                    System.out.println("Order cancelled ):");
+                                    return;
+                                default:
+                                    System.out.println("Invalid command. Enter 'confirm' to send order or 'q' to cancel order");
+                            }
+
+
+
+                        }
+
                     }
                     System.out.println("Cannot place an order for an empty cart!");
                     break;
@@ -666,6 +685,27 @@ public class UIMain {
                     System.out.println("Invalid input! ):");
             }
         }
+    }
+
+    private static void printCurrentOrderSummary(Store storeChoice, Date orderDate, List<Integer> userLocation, Cart cart) {
+        //float distance = getDistance(userLocation, storeChoice.getStoreLocation());
+        float distance = storeChoice.getDeliveryCost(userLocation);
+        float deliveryCost = distance * storeChoice.getDeliveryPpk();
+
+        System.out.println("Store: " + storeChoice.getStoreName());
+        //Explains how to format date: https://www.tutorialspoint.com/Date-Formatting-Using-printf
+        System.out.printf("Order Date: %1$td/%1$tm %1$tH:%1$tM\n", orderDate);
+        System.out.println("My location: (" + userLocation.get(0) + ", " + userLocation.get(1) + ")");
+        System.out.printf("PPK: %d\n", storeChoice.getDeliveryPpk());
+        System.out.printf("Distance from store: %.2f\n", distance);
+
+        System.out.printf("\nDelivery fee: %.2f", deliveryCost);
+        System.out.println("\nCart subtotal:" + cart.getCartTotalPrice());
+        System.out.print("----------------");
+        float total = cart.getCartTotalPrice() + deliveryCost;
+        System.out.printf("\nTotal: %.2f nis", total);
+
+        System.out.println("");
     }
 
     private static Date getOrderDateFromUser() {
