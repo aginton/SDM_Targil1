@@ -3,8 +3,8 @@ package course.java.sdm.engine.Store;
 import course.java.sdm.engine.Inventory.InventoryItem;
 import course.java.sdm.engine.Orders.Cart;
 import course.java.sdm.engine.Orders.Order;
-import jaxb.schema.generated.SDMSell;
-import jaxb.schema.generated.SDMStore;
+import course.java.sdm.engine.jaxb.schema.generated.SDMSell;
+import course.java.sdm.engine.jaxb.schema.generated.SDMStore;
 
 import java.util.*;
 
