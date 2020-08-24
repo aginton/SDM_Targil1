@@ -53,7 +53,7 @@ public class SDM {
                     //System.out.println("About to create stores");
                     createStores(sdm);
                     //System.out.println("\nAll stores created!\n\n");
-                    Order.setNumOfOrders(1);
+                    Order.setNumOfOrders(0);
 
                     inventory.updateStoresCarryingItems(stores);
                     inventory.updateAvePrice();
@@ -310,7 +310,7 @@ public class SDM {
                                             deliveryCostForStore,
                                             cartForStore,
                                             storeForThisSubOrder,
-                                            eOrderType.DYNAMIC_ORDER);
+                                            eOrderType.SPLITTED_DYNAMIC_ORDER);
             store.addOrder(orderForStore);
         });
     }

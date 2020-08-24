@@ -6,13 +6,13 @@ import course.java.sdm.engine.Store.Store;
 import java.util.*;
 
 public class Order {
-    private static int numOfOrders = 1;
+    private static int numOfOrders = 0;
 
     public static void setNumOfOrders(int numOfOrders) {
         Order.numOfOrders = numOfOrders;
     }
 
-    private int orderId;
+    private OrderId orderId;
     private List<Integer> userLocation;
     private Date orderDate;
     private Cart cart;
@@ -26,13 +26,26 @@ public class Order {
                  Cart cart, Set<Store> storesBoughtFrom,
                  eOrderType orderType) {
 
-        this.orderId = numOfOrders++;
+
+        if (orderType == eOrderType.STATIC_ORDER || orderType == eOrderType.DYNAMIC_ORDER) {
+            numOfOrders++;
+            this.orderId = new OrderId(numOfOrders, -1);
+        }
+
+        if (orderType == eOrderType.SPLITTED_DYNAMIC_ORDER) {
+            //id in format: <dynamic-order-id.store-id>
+            Iterator<Store> iterator = storesBoughtFrom.iterator();
+            int storeId = iterator.next().getStoreId();
+            this.orderId = new OrderId(numOfOrders, storeId);
+        }
+
         this.userLocation = userLocation;
         this.orderDate = orderDate;
         this.deliveryCost = deliveryCost;
         this.cart = cart;
         this.storesBoughtFrom = storesBoughtFrom;
         this.orderType = orderType;
+
     }
 
     public List<Integer> getUserLocation() {
@@ -43,7 +56,8 @@ public class Order {
         return storesBoughtFrom;
     }
 
-    public int getOrderId(){return orderId;}
+    public OrderId getOrderId(){return orderId;}
+
 //    public String getStoreName(){return storeName;}
 
     public int getNumberOfStoresInvolved() {
