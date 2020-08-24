@@ -1,4 +1,4 @@
-package Inventory;
+package course.java.sdm.engine.Inventory;
 
 public enum ePurchaseCategory {
 

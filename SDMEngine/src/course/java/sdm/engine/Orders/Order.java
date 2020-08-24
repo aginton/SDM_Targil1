@@ -1,9 +1,7 @@
-package Orders;
+package course.java.sdm.engine.Orders;
 
 
-import Inventory.ePurchaseCategory;
-import Store.Store;
-import jaxb.schema.generated.SDMStore;
+import course.java.sdm.engine.Store.Store;
 
 import java.util.*;
 
@@ -20,14 +18,21 @@ public class Order {
     private Cart cart;
     private float deliveryCost;
     Set<Store> storesBoughtFrom;
+    eOrderType orderType;
 
-    public Order(List<Integer> userLocation, Date orderDate,float deliveryCost, Cart cart, Set<Store> storesBoughtFrom){
+    public Order(List<Integer> userLocation,
+                 Date orderDate,
+                 float deliveryCost,
+                 Cart cart, Set<Store> storesBoughtFrom,
+                 eOrderType orderType) {
+
         this.orderId = numOfOrders++;
         this.userLocation = userLocation;
         this.orderDate = orderDate;
         this.deliveryCost = deliveryCost;
         this.cart = cart;
         this.storesBoughtFrom = storesBoughtFrom;
+        this.orderType = orderType;
     }
 
     public List<Integer> getUserLocation() {
@@ -43,6 +48,10 @@ public class Order {
 
     public int getNumberOfStoresInvolved() {
         return storesBoughtFrom.size();
+    }
+
+    public eOrderType getOrderType() {
+        return orderType;
     }
 
     @Override

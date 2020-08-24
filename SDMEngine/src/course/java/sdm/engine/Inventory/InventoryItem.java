@@ -1,12 +1,8 @@
-package Inventory;
+package course.java.sdm.engine.Inventory;
 
-import Store.Store;
 import jaxb.schema.generated.SDMItem;
 
-import java.util.HashSet;
-import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 
 public class InventoryItem implements Comparable<InventoryItem> {
 
@@ -43,14 +39,14 @@ public class InventoryItem implements Comparable<InventoryItem> {
 
 //    public void updateAvePrice(){
 //        float sum = 0f;
-//        for (Store store: storesCarryingItem){
+//        for (course.java.sdm.engine.Store store: storesCarryingItem){
 //            sum += store.getMapItemToPrices().get(inventoryItemId);
 //        }
 //
 //        this.avePrice = (sum / storesCarryingItem.size());
 //    }
 //
-//    public void addCarryingStore(Store store){
+//    public void addCarryingStore(course.java.sdm.engine.Store store){
 //        storesCarryingItem.add(store);
 //    }
 

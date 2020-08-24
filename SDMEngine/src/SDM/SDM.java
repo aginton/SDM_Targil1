@@ -1,13 +1,13 @@
 package SDM;
 
-import Inventory.Inventory;
-import Inventory.InventoryItem;
-import Orders.Orders;
-import Orders.Order;
-import Orders.eOrderType;
-import Store.Store;
-import Orders.Cart;
-import Orders.CartItem;
+import course.java.sdm.engine.Inventory.Inventory;
+import course.java.sdm.engine.Inventory.InventoryItem;
+import course.java.sdm.engine.Orders.Orders;
+import course.java.sdm.engine.Orders.Order;
+import course.java.sdm.engine.Orders.eOrderType;
+import course.java.sdm.engine.Store.Store;
+import course.java.sdm.engine.Orders.Cart;
+import course.java.sdm.engine.Orders.CartItem;
 import jaxb.schema.generated.*;
 
 import javax.xml.bind.JAXBContext;
@@ -113,7 +113,7 @@ public class SDM {
         List<SDMItem> sdmItems = sdm.getSDMItems().getSDMItem();
         List<SDMStore> sdmStores = sdm.getSDMStores().getSDMStore();
 
-        //Since we expect no duplicates, we can store Item and Store ids as lists
+        //Since we expect no duplicates, we can store Item and course.java.sdm.engine.Store ids as lists
         List<Integer> listOfItemIds = getListOfItemIds(sdmItems);
         List<Integer> listOfStoreIds = getListOfStoreIds(sdmStores);
 
@@ -185,7 +185,7 @@ public class SDM {
             x = store.getLocation().getX();
             y = store.getLocation().getY();
             if (x < 1 || y < 1 || x > 50 || y > 50){
-                loadingErrorMessage = loadingErrorMessage.concat("Error: Store-id= " + store.getId() + " has illegal location ("+x+", " + y +"). Coordinates must be between [1,50]");
+                loadingErrorMessage = loadingErrorMessage.concat("Error: course.java.sdm.engine.Store-id= " + store.getId() + " has illegal location ("+x+", " + y +"). Coordinates must be between [1,50]");
                 res = false;
             }
 
@@ -228,8 +228,8 @@ public class SDM {
 
             for (SDMSell sold: itemsSold){
                 if (!listOfAllowedIds.contains(sold.getItemId())){
-                    loadingErrorMessage = loadingErrorMessage.concat("Error: Store-Id = "+ store.getId() + " has item with item-Id= " + sold.getItemId() + ", but no such id exists in SDMItems!");
-                    //System.out.println("Error: Store-Id = "+ store.getId() + " has item with item-Id= " + sold.getItemId() + ", but no such id exists in SDMItems!");
+                    loadingErrorMessage = loadingErrorMessage.concat("Error: course.java.sdm.engine.Store-Id = "+ store.getId() + " has item with item-Id= " + sold.getItemId() + ", but no such id exists in SDMItems!");
+                    //System.out.println("Error: course.java.sdm.engine.Store-Id = "+ store.getId() + " has item with item-Id= " + sold.getItemId() + ", but no such id exists in SDMItems!");
                     res = false;
                 }
             }
@@ -246,7 +246,7 @@ public class SDM {
 
             for (SDMSell sold: itemsSold){
                 if (!tmpSet.add(sold.getItemId())){
-                    loadingErrorMessage = loadingErrorMessage.concat("Error: Store-Id = " + store.getId() + " is selling multiple items with id =" + sold.getItemId());
+                    loadingErrorMessage = loadingErrorMessage.concat("Error: course.java.sdm.engine.Store-Id = " + store.getId() + " is selling multiple items with id =" + sold.getItemId());
                     res = false;
                 }
             }
@@ -308,7 +308,9 @@ public class SDM {
             Order orderForStore = new Order(order.getUserLocation(),
                                             order.getOrderDate(),
                                             deliveryCostForStore,
-                                            cartForStore, storeForThisSubOrder);
+                                            cartForStore,
+                                            storeForThisSubOrder,
+                                            eOrderType.DYNAMIC_ORDER);
             store.addOrder(orderForStore);
         });
     }
@@ -357,9 +359,9 @@ public class SDM {
 
     public Store findCheapestStoreForItem(InventoryItem item) {
 
-//        Comparator<Store> comparator = new Comparator<Store>() {
+//        Comparator<course.java.sdm.engine.Store> comparator = new Comparator<course.java.sdm.engine.Store>() {
 //            @Override
-//            public int compare(Store o1, Store o2) {
+//            public int compare(course.java.sdm.engine.Store o1, course.java.sdm.engine.Store o2) {
 //                return o1.getMapItemToPrices().get(item.getInventoryItemId()).compareTo(o2.getMapItemToPrices().get(item.getInventoryItemId()));
 //            }
 //        };

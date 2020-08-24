@@ -1,7 +1,7 @@
-package Orders;
+package course.java.sdm.engine.Orders;
 
-import Inventory.ePurchaseCategory;
-import Store.Store;
+import course.java.sdm.engine.Inventory.ePurchaseCategory;
+import course.java.sdm.engine.Store.Store;
 
 import java.util.HashMap;
 import java.util.HashSet;

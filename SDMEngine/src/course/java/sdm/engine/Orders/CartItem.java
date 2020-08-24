@@ -1,7 +1,7 @@
-package Orders;
+package course.java.sdm.engine.Orders;
 
-import Store.Store;
-import Inventory.InventoryItem;
+import course.java.sdm.engine.Store.Store;
+import course.java.sdm.engine.Inventory.InventoryItem;
 import java.util.Objects;
 
 public class CartItem extends InventoryItem {

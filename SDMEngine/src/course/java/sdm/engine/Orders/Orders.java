@@ -1,8 +1,7 @@
-package Orders;
+package course.java.sdm.engine.Orders;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class Orders {
 
@@ -30,7 +29,7 @@ public class Orders {
             orders = new ArrayList<Order>();
 
         orders.add(order);
-        //System.out.println("Order " + order.getOrderId() + " successfully added to Orders!");
+        //System.out.println("Order " + order.getOrderId() + " successfully added to course.java.sdm.engine.Orders!");
     }
 
 }

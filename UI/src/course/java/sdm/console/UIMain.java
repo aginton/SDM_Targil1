@@ -1,13 +1,14 @@
-package ui;
+package course.java.sdm.console;
 
-import Inventory.Inventory;
-import Inventory.InventoryItem;
-import Inventory.ePurchaseCategory;
-import Orders.Order;
-import Orders.Cart;
-import Orders.CartItem;
+import course.java.sdm.engine.Inventory.Inventory;
+import course.java.sdm.engine.Inventory.InventoryItem;
+import course.java.sdm.engine.Inventory.ePurchaseCategory;
+import course.java.sdm.engine.Orders.Order;
+import course.java.sdm.engine.Orders.Cart;
+import course.java.sdm.engine.Orders.CartItem;
+import course.java.sdm.engine.Orders.eOrderType;
 import SDM.SDM;
-import Store.Store;
+import course.java.sdm.engine.Store.Store;
 import jaxb.schema.generated.SDMItem;
 import jaxb.schema.generated.SDMSell;
 import jaxb.schema.generated.SDMStore;
@@ -104,8 +105,6 @@ public class UIMain {
                 default:
                     System.out.println("Invalid input. " + operator + " does not correspond to any command!");
             }
-
-
         }
     }
 
@@ -137,7 +136,7 @@ public class UIMain {
 
         //2. Ask user if they want to add new item, delete item, or update price for existing item for storeChoice
         while (true){
-            System.out.println("\nStore: " + storeChoice.getStoreName());
+            System.out.println("\ncourse.java.sdm.engine.Store: " + storeChoice.getStoreName());
             System.out.println("To add an existing item to this stores inventory, enter 'add'. ");
             System.out.println("To update price of item in this store's inventory, enter 'update'");
             System.out.println("To remove an item from store's inventory, enter 'remove'");
@@ -204,7 +203,7 @@ public class UIMain {
             else{
                 isSoldByStore = checkIfInputIsAllowed(input, itemsSoldAtStore);
                 if (!isSoldByStore){
-                    System.out.printf("Error: Store %s does not sell item with id=%s\n", storeChoice.getStoreName(), input);
+                    System.out.printf("Error: course.java.sdm.engine.Store %s does not sell item with id=%s\n", storeChoice.getStoreName(), input);
                 }
                 else {
                     chosenItem = inventory.getInventoryItemById(Integer.parseInt(input));
@@ -269,7 +268,7 @@ public class UIMain {
             }
             else{
                 if (!isSoldByStore){
-                    System.out.printf("Error: Store %s does not sell item with id=%s\n", storeChoice.getStoreName(), input);
+                    System.out.printf("Error: course.java.sdm.engine.Store %s does not sell item with id=%s\n", storeChoice.getStoreName(), input);
                 }
                 else {
                     chosenItem = inventory.getInventoryItemById(Integer.parseInt(input));
@@ -278,7 +277,7 @@ public class UIMain {
         }
 
         if (inventory.getMapItemsToStoresWithItem().get(chosenItem).size() == 1){
-            System.out.printf("\nCannot perform remove: Store %s is currently the only store selling item-id %d (%s)",
+            System.out.printf("\nCannot perform remove: course.java.sdm.engine.Store %s is currently the only store selling item-id %d (%s)",
                     storeChoice.getStoreName(), chosenItem.getInventoryItemId(), chosenItem.getItemName());
             return;
         }
@@ -324,7 +323,7 @@ public class UIMain {
             }
             else{
                 if (!canBeAddedToStore){
-                    System.out.printf("Error: Store %s already contains an item with id=%s\n", storeChoice.getStoreName(), input);
+                    System.out.printf("Error: course.java.sdm.engine.Store %s already contains an item with id=%s\n", storeChoice.getStoreName(), input);
                 }
                 else {
                     chosenItem = inventory.getInventoryItemById(Integer.parseInt(input));
@@ -383,17 +382,13 @@ public class UIMain {
                 int orderId = order.getOrderId();
                 Date orderDate = order.getOrderDate();
                 String date = new SimpleDateFormat("dd/MM\tHH:mm").format(orderDate);
-                //TODO: if static (only one store) show id and store name. if dynamic, do not show these details.
 
-                boolean isStaticOrder = order.getStoresBoughtFrom().size() == 1;
-
-                if (isStaticOrder) {
-                    //static order
+                if (order.getOrderType() == eOrderType.STATIC_ORDER) {
                     Iterator<Store> iterator = order.getStoresBoughtFrom().iterator();
                     int storeId = iterator.next().getStoreId();
                     String storeName = iterator.next().getStoreName();
 
-                    System.out.printf("| Order-id: %d | %-10s | Store-Id: %-5d | %-13s |\n\n", orderId, date, storeId, storeName);
+                    System.out.printf("| Order-id: %d | %-10s | course.java.sdm.engine.Store-Id: %-5d | %-13s |\n\n", orderId, date, storeId, storeName);
                 }
                 else {
                     //dynamic order
@@ -491,13 +486,15 @@ public class UIMain {
             mapItemsChosenToAmount.put(itemChosen,amount);
         }
 
-        System.out.println("calculating the cheapest cart for you...");
+        System.out.println("calculating the cheapest cart for you...\n");
+        //TODO: add delay for 1-2 seconds...
         Cart cart = sdmInstance.findCheapestCartForUser(mapItemsChosenToAmount);
         Set<Store> storesBoughtFrom = cart.getStoresBoughtFrom();
 
 //        String pattern = "dd/MM HH:mm";
 //        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
 //        String formattedDate = simpleDateFormat.format(orderDate);
+        System.out.println("Your Order: ");
         System.out.printf("Order Date: %1$td/%1$tm %1$tH:%1$tM\n", orderDate);
         System.out.println("My location: (" + userLocation.get(0) + ", " + userLocation.get(1) + ")");
         System.out.printf("Number Of Stores: %d\n", storesBoughtFrom.size());
@@ -505,7 +502,7 @@ public class UIMain {
         printCartDetailsForDynamicOrder(cart);
         float deliveryCost = calculateDeliveryCostForDynamicOrder(storesBoughtFrom, userLocation);
         System.out.printf("\nDelivery fee: %.2f", deliveryCost);
-        System.out.println("\nCart subtotal:" + cart.getCartTotalPrice());
+        System.out.println("\nCart subtotal: " + cart.getCartTotalPrice());
         System.out.print("----------------");
         float total = cart.getCartTotalPrice() + deliveryCost;
         System.out.printf("\nTotal: %.2f nis", total);
@@ -518,8 +515,14 @@ public class UIMain {
             case "confirm":
                 if (!cart.getCart().isEmpty()) {
                     System.out.println("Order confirmed! (:");
+                    System.out.println("Thank you for using our application.");
 
-                    Order order = new Order(userLocation, orderDate, deliveryCost, cart, storesBoughtFrom);
+                    Order order = new Order(userLocation,
+                                            orderDate,
+                                            deliveryCost,
+                                            cart,
+                                            storesBoughtFrom,
+                                            eOrderType.DYNAMIC_ORDER);
                     sdmInstance.addNewDynamicOrder(storesBoughtFrom, order);
                     return;
                 }
@@ -527,6 +530,7 @@ public class UIMain {
                 break;
 
             case "q":
+                System.out.println("Order canceled");
                 break;
         }
     }
@@ -564,7 +568,7 @@ public class UIMain {
         String input;
 
         System.out.println("\nWhich store would you like to order from? Please enter the store-id from the following options. Enter 'Q' at anytime to cancel order: ");
-        //1. Show stores and ask user for Store id
+        //1. Show stores and ask user for course.java.sdm.engine.Store id
         while (!isValidStore) {
             printAvailableStores(sdmInstance);
             input = in.nextLine().trim();
@@ -602,7 +606,7 @@ public class UIMain {
             System.out.println("\nCart summary:");
             printCartDetailsForStaticOrder(cart);
 
-//            System.out.println("Store: " + storeChoice.getStoreName());
+//            System.out.println("course.java.sdm.engine.Store: " + storeChoice.getStoreName());
 //            //Explains how to format date: https://www.tutorialspoint.com/Date-Formatting-Using-printf
 //            System.out.printf("Order Date: %1$td/%1$tm %1$tH:%1$tM\n", orderDate);
 //            System.out.println("My location: (" + userLocation.get(0) + ", " + userLocation.get(1) + ")");
@@ -630,10 +634,16 @@ public class UIMain {
                             switch (input){
                                 case "confirm":
                                     System.out.println("Order confirmed! (:");
+                                    System.out.println("Thank you for using our application.");
 
                                     Set<Store> storeOfThisOrder = new HashSet<Store>();
                                     storeOfThisOrder.add(storeChoice);
-                                    Order order = new Order (userLocation, orderDate, deliveryCost, cart, storeOfThisOrder);
+                                    Order order = new Order (userLocation,
+                                                             orderDate,
+                                                             deliveryCost,
+                                                             cart,
+                                                             storeOfThisOrder,
+                                                             eOrderType.STATIC_ORDER);
                                     sdmInstance.addNewStaticOrder(storeChoice, order);
                                     return;
 
@@ -692,7 +702,7 @@ public class UIMain {
         float distance = storeChoice.getDeliveryCost(userLocation);
         float deliveryCost = distance * storeChoice.getDeliveryPpk();
 
-        System.out.println("Store: " + storeChoice.getStoreName());
+        System.out.println("course.java.sdm.engine.Store: " + storeChoice.getStoreName());
         //Explains how to format date: https://www.tutorialspoint.com/Date-Formatting-Using-printf
         System.out.printf("Order Date: %1$td/%1$tm %1$tH:%1$tM\n", orderDate);
         System.out.println("My location: (" + userLocation.get(0) + ", " + userLocation.get(1) + ")");
@@ -778,8 +788,8 @@ public class UIMain {
     private static void printCartDetailsForDynamicOrder(Cart bestPriceCart) {
 
         if (!bestPriceCart.isEmpty()) {
-            System.out.printf("| Item-Id | %-14s | Purchase-Category | %-19s | %-12s | Total Cost | Store-id |\n", "Item-Name", "Amount", "Best unit price");
-            System.out.println("---------------------------------------------------------------------------------");
+            System.out.printf("| Item-Id | %-14s | Purchase-Category | %-16s | %-12s | %-14s | course.java.sdm.engine.Store-id |\n", "Item-Name", "Amount", "Best unit price" ,"Total Cost");
+            System.out.println("-----------------------------------------------------------------------------------------------------------------");
             bestPriceCart.getCart().forEach((k,v)->{
                 String name = v.getItemName();
                 ePurchaseCategory pCat = v.getPurchaseCategory();
@@ -787,7 +797,7 @@ public class UIMain {
                 int price = v.getPrice();
                 float itemTotalCost = price*amount;
                 int storeId = v.getStoreBoughtFrom().getStoreId();
-                System.out.printf("| %-7d | %-15s | %-20s | %-9.2f | %-11d nis | %-11.2f nis| %-7d |\n", k, name, pCat, amount, price, itemTotalCost, storeId);
+                System.out.printf("| %-7d | %-15s | %-16s | %-16.2f | %-11d nis | %-11.2f nis| %-8d |\n", k, name, pCat, amount, price, itemTotalCost, storeId);
             });
         }
         else {
@@ -868,7 +878,7 @@ public class UIMain {
         prompt = prompt.concat("\n----------------------------------------------------------------");
 
 
-        //TODO: maybe change structure of Store Inventory to hold CartItems instead?
+        //TODO: maybe change structure of course.java.sdm.engine.Store course.java.sdm.engine.Inventory to hold CartItems instead?
         //Create string listing items and their details
         for (InventoryItem item : fullInventory) {
             boolean isSoldAtStore = storeInventory.contains(item);
@@ -889,7 +899,7 @@ public class UIMain {
     }
 
     private static void printAvailableStores(SDM sdm){
-        System.out.printf("| %-8s | %-22s | %-5s |\n", "Store-id", "Name", "PPK");
+        System.out.printf("| %-8s | %-22s | %-5s |\n", "course.java.sdm.engine.Store-id", "Name", "PPK");
         System.out.println("---------------------------------------------");
         for (Store store : sdm.getStores()) {
             System.out.printf("| %-8d | %-22s | %-5d |\n", store.getStoreId(), store.getStoreName(), store.getDeliveryPpk());
@@ -1002,7 +1012,7 @@ public class UIMain {
         List<Store> stores = sdm.getStores();
         for (Store store: stores){
             System.out.println("\n===========================================================================\n");
-            System.out.printf("| Store-id: %-3d | Store-name: %-10s |\n",store.getStoreId(), store.getStoreName());
+            System.out.printf("| course.java.sdm.engine.Store-id: %-3d | course.java.sdm.engine.Store-name: %-10s |\n",store.getStoreId(), store.getStoreName());
             viewInventoryForStore(store);
             viewOrdersForStore(store);
             System.out.printf("\nPPK: %d", store.getDeliveryPpk());
@@ -1062,7 +1072,7 @@ public class UIMain {
 
     private static void viewInventoryForStore(Store store) {
         List<InventoryItem> storeInventory = store.getInventoryItems();
-        System.out.println("\nCurrent Inventory: ");
+        System.out.println("\nCurrent course.java.sdm.engine.Inventory: ");
         System.out.printf("| item-Id | %-15s | Purchase-Category |   price   | amount sold |", "item-Name");
         System.out.println("\n-----------------------------------------------------------------------");
         storeInventory.forEach(item->{
@@ -1151,7 +1161,7 @@ public class UIMain {
                 sells = sells.concat(" {item-id=" + itemSold.getItemId() + ", price=" + itemSold.getPrice() + "},");
             }
             sells = sells.concat("]");
-            System.out.println("Store-Id=" + store.getId() + ", store-name= " + store.getName() + ", location= " + loc + ", " + sells);
+            System.out.println("course.java.sdm.engine.Store-Id=" + store.getId() + ", store-name= " + store.getName() + ", location= " + loc + ", " + sells);
         }
     }
 
@@ -1203,7 +1213,7 @@ public class UIMain {
 //    }
 
 
-    //    private static int getPriceIdFromUser(SDM sdm, Store storeChoice) {
+    //    private static int getPriceIdFromUser(SDM sdm, course.java.sdm.engine.Store storeChoice) {
 //        List<InventoryItem> fullInventory = sdm.getInventory().getListInventoryItems();
 //        List<InventoryItem> storeInventory = storeChoice.getInventoryItems();
 //
@@ -1233,7 +1243,7 @@ public class UIMain {
 //    }
 
     //    private static int getStoreIdFromUser(SDM sdmInstance) {
-//        List<Store> listOfStores = sdmInstance.getStores();
+//        List<course.java.sdm.engine.Store> listOfStores = sdmInstance.getStores();
 //        List<Integer> storeIds = listOfStores.stream().map(i->i.getStoreId()).collect(Collectors.toList());
 //
 //        Scanner in = new Scanner(System.in);

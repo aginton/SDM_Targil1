@@ -1,9 +1,9 @@
-package Inventory;
+package course.java.sdm.engine.Inventory;
 
-import Orders.Cart;
-import Orders.CartItem;
-import Orders.Order;
-import Store.Store;
+import course.java.sdm.engine.Orders.Cart;
+import course.java.sdm.engine.Orders.CartItem;
+import course.java.sdm.engine.Orders.Order;
+import course.java.sdm.engine.Store.Store;
 
 import java.util.*;
 import java.util.stream.Collectors;

@@ -1,8 +1,8 @@
-package Store;
+package course.java.sdm.engine.Store;
 
-import Inventory.InventoryItem;
-import Orders.Cart;
-import Orders.Order;
+import course.java.sdm.engine.Inventory.InventoryItem;
+import course.java.sdm.engine.Orders.Cart;
+import course.java.sdm.engine.Orders.Order;
 import jaxb.schema.generated.SDMSell;
 import jaxb.schema.generated.SDMStore;
 
@@ -97,7 +97,7 @@ public class Store {
     }
 
     public void addOrder(Order order) {
-        //System.out.println("\nEntered Store.addOrder()");
+        //System.out.println("\nEntered course.java.sdm.engine.Store.addOrder()");
         //System.out.println("about to call orders.add(order)");
         orders.add(order);
         setTotalDeliveryIncome(order.getDeliveryCost()+this.getTotalDeliveryIncome());

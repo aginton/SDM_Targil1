@@ -1,4 +1,4 @@
-package Orders;
+package course.java.sdm.engine.Orders;
 
 public enum eOrderType {
 
