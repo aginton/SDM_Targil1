@@ -27,13 +27,11 @@ import java.util.stream.Stream;
 
 public class UIMain {
 
-    public static void main(String[] args) throws IOException {
-//        boolean fileExists = false;
+    public static void main(String[] args)  {
         boolean isSDMLoaded = false;
         boolean wantsToQuit = false;
         SDM sdmInstance = new SDM();
 
-//        SuperDuperMarketDescriptor sdmLoaded;
 
         // create an object of Scanner class
         Scanner scanner = new Scanner(System.in);
@@ -100,9 +98,6 @@ public class UIMain {
                     System.out.println("Goodbye!");
                     return;
 
-                case "9":
-                    //testThisMethod(sdmInstance);
-                    break;
 
                 default:
                     System.out.println("Invalid input. " + operator + " does not correspond to any command!");
@@ -379,8 +374,12 @@ public class UIMain {
 
                 if (order.getOrderType() == eOrderType.STATIC_ORDER) {
                     Iterator<Store> iterator = order.getStoresBoughtFrom().iterator();
-                    int storeId = iterator.next().getStoreId();
-                    String storeName = iterator.next().getStoreName();
+                    Store storeForOrder = iterator.next();
+                    //int storeId = iterator.next().getStoreId();
+                    //String storeName = iterator.next().getStoreName();
+                    int storeId = storeForOrder.getStoreId();
+                    String storeName = storeForOrder.getStoreName();
+
 
                     System.out.printf("| Order-id: %d | %-10s | Store-Id: %-5d | %-13s |\n\n", orderId, date, storeId, storeName);
                 } else {
@@ -592,7 +591,6 @@ public class UIMain {
 //        float distance = getDistance(userLocation, storeChoice.getStoreLocation());
         float distance = storeChoice.getDistance(userLocation);
 
-
         float deliveryCost = distance * storeChoice.getDeliveryPpk();
 
         //4. Choosing items to buy
@@ -622,7 +620,7 @@ public class UIMain {
             switch (input) {
                 case "checkout":
                     if (!cart.getCart().isEmpty()) {
-                        printCurrentOrderSummary(storeChoice, orderDate, userLocation, cart);
+                        printCurrentOrderSummary(storeChoice, orderDate, userLocation, cart, distance, deliveryCost);
                         System.out.println("To confirm order, enter 'confirm'. To cancel order and go back to main menu, enter 'q':");
                         while (true) {
                             input = in.nextLine().toLowerCase().trim();
@@ -692,10 +690,10 @@ public class UIMain {
         }
     }
 
-    private static void printCurrentOrderSummary(Store storeChoice, Date orderDate, List<Integer> userLocation, Cart cart) {
+    private static void printCurrentOrderSummary(Store storeChoice, Date orderDate, List<Integer> userLocation, Cart cart, float distance, float deliveryCost) {
         //float distance = getDistance(userLocation, storeChoice.getStoreLocation());
-        float distance = storeChoice.getDeliveryCost(userLocation);
-        float deliveryCost = distance * storeChoice.getDeliveryPpk();
+//        float distance = storeChoice.getDistance(userLocation);
+//        float deliveryCost = distance * storeChoice.getDeliveryPpk();
 
         System.out.println("Store: " + storeChoice.getStoreName());
         //Explains how to format date: https://www.tutorialspoint.com/Date-Formatting-Using-printf
