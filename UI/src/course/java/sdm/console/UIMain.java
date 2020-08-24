@@ -124,7 +124,7 @@ public class UIMain {
 
         //1. Show list of stores and ask user for id of store to update
         while (!isValidStoreChoice) {
-            System.out.println("Which store inventory do you wish to update? Please enter store-id from the following list, or enter 'cancel' to go back to main menu:");
+            System.out.println("\nWhich store inventory do you wish to update? Please enter store-id from the following list, or enter 'cancel' to go back to main menu:");
             printAvailableStores(sdmInstance);
             String input = in.nextLine().trim();
             if (input.equalsIgnoreCase("cancel"))
@@ -538,7 +538,8 @@ public class UIMain {
 
             storeLoc = store.getStoreLocation();
             ppk = store.getDeliveryPpk();
-            distance = getDistance(userLocation, storeLoc);
+            //distance = getDistance(userLocation, storeLoc);
+            distance = store.getDistance(userLocation);
             deliveryCostSum += distance * ppk;
         }
 
@@ -588,7 +589,9 @@ public class UIMain {
         if (userLocation.contains(-1))
             return;
 
-        float distance = getDistance(userLocation, storeChoice.getStoreLocation());
+//        float distance = getDistance(userLocation, storeChoice.getStoreLocation());
+        float distance = storeChoice.getDistance(userLocation);
+
 
         float deliveryCost = distance * storeChoice.getDeliveryPpk();
 

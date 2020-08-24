@@ -83,7 +83,5 @@ public class Order {
     public Cart getCartForThisOrder() {
         return cart;
     }
-    //TODO: Make a static method that calculates the delivery cost and returns value
-
 
 }

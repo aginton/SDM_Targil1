@@ -164,12 +164,12 @@ public class Store {
     }
 
     public float getDeliveryCost(List<Integer> userLocation) {
-        return deliveryPpk* getDistance(userLocation, getStoreLocation());
+        return deliveryPpk* getDistance(userLocation);
     }
 
-    public static float getDistance(List<Integer> userLocation, List<Integer> storeLocation) {
+    public float getDistance(List<Integer> userLocation) {
         if (userLocation.size() != 2 || storeLocation.size() != 2){
-            System.out.println("Error: Input lists must each contain 2 points!");
+            System.out.println("Error: Input lists must  contain 2 points!");
             return -1;
         }
         int xDelta = userLocation.get(0) -storeLocation.get(0);
