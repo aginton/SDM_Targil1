@@ -185,7 +185,7 @@ public class SDM {
             x = store.getLocation().getX();
             y = store.getLocation().getY();
             if (x < 1 || y < 1 || x > 50 || y > 50){
-                loadingErrorMessage = loadingErrorMessage.concat("Error: course.java.sdm.engine.Store-id= " + store.getId() + " has illegal location ("+x+", " + y +"). Coordinates must be between [1,50]");
+                loadingErrorMessage = loadingErrorMessage.concat("Error: Store-id= " + store.getId() + " has illegal location ("+x+", " + y +"). Coordinates must be between [1,50]");
                 res = false;
             }
 
@@ -228,7 +228,7 @@ public class SDM {
 
             for (SDMSell sold: itemsSold){
                 if (!listOfAllowedIds.contains(sold.getItemId())){
-                    loadingErrorMessage = loadingErrorMessage.concat("Error: course.java.sdm.engine.Store-Id = "+ store.getId() + " has item with item-Id= " + sold.getItemId() + ", but no such id exists in SDMItems!");
+                    loadingErrorMessage = loadingErrorMessage.concat("Error: Store-Id = "+ store.getId() + " has item with item-Id= " + sold.getItemId() + ", but no such id exists in SDMItems!");
                     //System.out.println("Error: course.java.sdm.engine.Store-Id = "+ store.getId() + " has item with item-Id= " + sold.getItemId() + ", but no such id exists in SDMItems!");
                     res = false;
                 }
@@ -246,7 +246,7 @@ public class SDM {
 
             for (SDMSell sold: itemsSold){
                 if (!tmpSet.add(sold.getItemId())){
-                    loadingErrorMessage = loadingErrorMessage.concat("Error: course.java.sdm.engine.Store-Id = " + store.getId() + " is selling multiple items with id =" + sold.getItemId());
+                    loadingErrorMessage = loadingErrorMessage.concat("Error: Store-Id = " + store.getId() + " is selling multiple items with id =" + sold.getItemId());
                     res = false;
                 }
             }
