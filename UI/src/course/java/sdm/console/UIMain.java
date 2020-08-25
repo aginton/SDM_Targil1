@@ -17,14 +17,12 @@ import course.java.sdm.engine.jaxb.schema.generated.SDMStores;
 import course.java.sdm.engine.jaxb.schema.generated.SuperDuperMarketDescriptor;
 
 import java.io.File;
-import java.io.IOException;
 import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class UIMain {
 
@@ -32,7 +30,6 @@ public class UIMain {
         boolean isSDMLoaded = false;
         boolean wantsToQuit = false;
         SDM sdmInstance = new SDM();
-
 
         // create an object of Scanner class
         Scanner scanner = new Scanner(System.in);
@@ -83,12 +80,14 @@ public class UIMain {
 
                     break;
 
+                    //view order history
                 case "5":
                     if (isSDMLoaded) {
                         viewOrderHistory(sdmInstance);
                     }
                     break;
 
+                    //update store inventory
                 case "6":
                     if (isSDMLoaded) {
                         updateInventoryForStore(sdmInstance);
@@ -163,8 +162,6 @@ public class UIMain {
             }
 
         }
-
-        //3.
     }
 
     private static void updatePricesForStore(SDM sdmInstance, Store storeChoice) {
@@ -207,7 +204,6 @@ public class UIMain {
             }
         }
 
-        //TODO: fix code duplication
         //2. Update price
         while (!isValidPrice) {
             System.out.printf("What price do you want to set for %s at store %s. Please enter a positive integer, or enter 'cancel' to go back to previous menu:\n", chosenItem.getItemName(), storeChoice.getStoreName());
@@ -221,7 +217,7 @@ public class UIMain {
                 if (price > 0) {
                     isValidPrice = true;
                 } else
-                    System.out.println("Error: Price cannot be a negative number!");
+                    System.out.println("Error: Price must be a positive number!");
             }
         }
 
@@ -349,7 +345,6 @@ public class UIMain {
 
 
     private static void printItemsNotSoldByStore(SDM sdmInstance, Store storeChoice) {
-        //System.out.printf("The following items are currently NOT sold by %s:", storeChoice.getStoreName());
         System.out.printf("\n| item-Id | %-15s | Purchase-Category |  ", "Item-Name");
         System.out.println("\n-------------------------------------------------");
         List<InventoryItem> res = sdmInstance.getInventory().getListOfItemsNotSoldByStore(storeChoice);
@@ -407,16 +402,29 @@ public class UIMain {
 
     private static void
     placeAnOrder(SDM sdmInstance) {
-
         Scanner in = new Scanner(System.in);
-        int typeOfOrderInput;
+        int typeOfOrderInput = 0;
+        boolean isValidInput = false;
 
-        //1. Ask user if static or dynamic order
-        System.out.println("Would you like a static order or dynamic order? Choose number of option");
-        System.out.println("1. Static order");
-        System.out.println("2. Dynamic order");
 
-        typeOfOrderInput = in.nextInt();
+        while (!isValidInput){
+            //1. Ask user if static or dynamic order
+            System.out.println("\nWould you like a static order or dynamic order? Choose number of option");
+            System.out.println("1. Static order");
+            System.out.println("2. Dynamic order");
+
+            String input = in.nextLine().trim();
+            if (!checkIfInputIsAllowed(input, null)){
+                System.out.printf("Error: %s is not a valid integer\n", input);
+            }
+            else{
+                typeOfOrderInput = Integer.parseInt(input);
+                if (typeOfOrderInput == 1 || typeOfOrderInput == 2)
+                    isValidInput = true;
+                else
+                    System.out.printf("Error: %d does not correspond to available order type\n", typeOfOrderInput);
+            }
+        }
 
         switch (typeOfOrderInput) {
             case 1: {
@@ -541,12 +549,10 @@ public class UIMain {
     private static float calculateDeliveryCostForDynamicOrder(Set<Store> storesBoughtFrom, List<Integer> userLocation) {
 
         float deliveryCostSum = 0, distance;
-        List<Integer> storeLoc = new ArrayList<>();
         int ppk;
 
         for (Store store : storesBoughtFrom) {
 
-            storeLoc = store.getStoreLocation();
             ppk = store.getDeliveryPpk();
             distance = store.getDistance(userLocation);
             deliveryCostSum += distance * ppk;
@@ -564,13 +570,12 @@ public class UIMain {
 
         Store storeChoice = null;
         List<Integer> userLocation = new ArrayList<>();
-        int userInput;
         float amount;
         Cart cart = new Cart();
         Scanner in = new Scanner(System.in);
         String input;
 
-        System.out.println("\nWhich store would you like to order from? Please enter the store-id from the following options. Enter 'Q' at anytime to cancel order: ");
+        System.out.println("\nWhich store would you like to order from? Please enter store-id from the following list, or enter 'Q' to go back to main menu:");
         //1. Show stores and ask user for Store id
         while (!isValidStore) {
             printAvailableStores(sdmInstance);
@@ -582,12 +587,10 @@ public class UIMain {
 
             if (isValidStore)
                 storeChoice = listOfStores.get(Integer.parseInt(input) - 1);
+            else
+                System.out.printf("Invalid input: %s does not correspond to id of available stores\n", input);
         }
 
-
-//        storeChoice = listOfStores.get(userInput - 1);
-
-        //TODO: See why sometimes still prints "Invalid Date and Time" after entering correct input
         //2. Ask user for date and time
         Date orderDate = getOrderDateFromUser();
         if (orderDate == null)
@@ -603,14 +606,14 @@ public class UIMain {
 
         //4. Choosing items to buy
         while (true) {
-            System.out.println("\nTo add an item to your cart, enter 'add'. \nWhen finished, enter 'checkout'. \nTo cancel current order, enter 'cancel'");
+            System.out.println("\nTo add an item to your cart, enter 'add'. \nWhen finished, enter 'finish'. \nTo cancel current order, enter 'cancel'");
             System.out.println("==========================================================================================================================");
             System.out.println("\nCart summary:");
             printCartDetailsForStaticOrder(cart);
 
             input = in.nextLine().toLowerCase().trim();
             switch (input) {
-                case "checkout":
+                case "finish":
                     if (!cart.getCart().isEmpty()) {
                         printCurrentOrderSummary(storeChoice, orderDate, userLocation, cart, distance, deliveryCost);
                         System.out.println("To confirm order, enter 'confirm'. To cancel order and go back to main menu, enter 'q':");
@@ -707,7 +710,7 @@ public class UIMain {
 
         while (true) {
             try {
-                System.out.println("Please enter date and time for delivery as dd/MM-hh:mm");
+                System.out.println("Please enter date and time for delivery as dd/MM-hh:mm (day/month-hour:min). \nEnter 'cancel' to go back to main menu");
 
                 //TODO: Check how to get date while ignoring white spaces
                 String input = in.nextLine();
@@ -795,7 +798,7 @@ public class UIMain {
             return true;
 
         } catch (NumberFormatException nfe) {
-            System.out.printf("Error: %s could not be parsed as Int!\n", input);
+            //System.out.printf("Error: %s could not be parsed as Int!\n", input);
             return false;
         }
     }
@@ -879,6 +882,7 @@ public class UIMain {
                 spotNotTaken = true;
 
                 System.out.println("What is your current location? (Please enter comma-separated whole numbers between [1,50])");
+                System.out.println("Enter 'cancel' to go back to main menu.");
                 String input = src.nextLine();
 
                 if (input.equalsIgnoreCase("cancel")) {
@@ -948,7 +952,7 @@ public class UIMain {
                     res = in.nextFloat();
                     if (res > 0)
                         return Float.valueOf(df.format(res));
-                    System.out.println("Invalid input: Quantity must be a positive, whole number");
+                    System.out.println("Invalid input: Quantity must be a positive number");
                 } else if (purchaseCat == ePurchaseCategory.QUANTITY) {
                     System.out.println("Please enter order quantity: ");
                     res = in.nextFloat();
