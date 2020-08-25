@@ -1,4 +1,4 @@
-package SDM;
+package course.java.sdm.engine.SDM;
 
 import course.java.sdm.engine.Inventory.Inventory;
 import course.java.sdm.engine.Inventory.InventoryItem;
@@ -8,7 +8,10 @@ import course.java.sdm.engine.Orders.eOrderType;
 import course.java.sdm.engine.Store.Store;
 import course.java.sdm.engine.Orders.Cart;
 import course.java.sdm.engine.Orders.CartItem;
-import jaxb.schema.generated.*;
+import course.java.sdm.engine.jaxb.schema.generated.SDMItem;
+import course.java.sdm.engine.jaxb.schema.generated.SDMSell;
+import course.java.sdm.engine.jaxb.schema.generated.SDMStore;
+import course.java.sdm.engine.jaxb.schema.generated.SuperDuperMarketDescriptor;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -66,7 +69,7 @@ public class SDM {
 
         } catch (JAXBException e) {
             e.printStackTrace();
-            loadingErrorMessage = loadingErrorMessage.concat("Encountered JAXException: SDM from file is not valid");
+            loadingErrorMessage = loadingErrorMessage.concat("Encountered JAXException: course.java.sdm.engine.SDM from file is not valid");
             return false;
         }
     }
@@ -118,9 +121,9 @@ public class SDM {
         List<Integer> listOfStoreIds = getListOfStoreIds(sdmStores);
 
         //error 3.2
-        areItemIdsUnique = checkListOfIntsUnique(listOfItemIds, "SDM-Items");
+        areItemIdsUnique = checkListOfIntsUnique(listOfItemIds, "course.java.sdm.engine.SDM-Items");
         //error 3.3
-        areStoreIdsUnique = checkListOfIntsUnique(listOfStoreIds, "SDM-Stores");
+        areStoreIdsUnique = checkListOfIntsUnique(listOfStoreIds, "course.java.sdm.engine.SDM-Stores");
         //error 3.4
         isStoreUsingExistingItemIds = checkItemsSoldExist(sdmStores, listOfItemIds);
         //error 3.5
