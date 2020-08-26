@@ -214,7 +214,6 @@ public class SDM {
             for (SDMSell sold: itemsSold){
                 if (!listOfAllowedIds.contains(sold.getItemId())){
                     loadingErrorMessage = loadingErrorMessage.concat("Error: Store-Id = "+ store.getId() + " has item with item-Id= " + sold.getItemId() + ", but no such id exists in SDMItems!");
-                    //System.out.println("Error: course.java.sdm.engine.Store-Id = "+ store.getId() + " has item with item-Id= " + sold.getItemId() + ", but no such id exists in SDMItems!");
                     res = false;
                 }
             }

@@ -9,13 +9,7 @@ import course.java.sdm.engine.Orders.Order;
 import course.java.sdm.engine.Orders.eOrderType;
 import course.java.sdm.engine.SDM.SDM;
 import course.java.sdm.engine.Store.Store;
-//import course.java.sdm.engine.jaxb.schema.generated.SDMItem;
-//import course.java.sdm.engine.jaxb.schema.generated.SDMSell;
-//import course.java.sdm.engine.jaxb.schema.generated.*;
 import course.java.sdm.engine.jaxb.schema.generated.SDMStore;
-//import course.java.sdm.engine.jaxb.schema.generated.SDMStores;
-//import course.java.sdm.engine.jaxb.schema.generated.SuperDuperMarketDescriptor;
-
 import java.io.File;
 import java.text.DecimalFormat;
 import java.text.ParseException;
@@ -104,7 +98,6 @@ public class UIMain {
         }
 
         System.out.println("Goodbye!");
-
     }
 
     /*This function has user select a store and then allows them to either
@@ -413,6 +406,8 @@ public class UIMain {
                         InventoryItem itemChosen = sdmInstance.getInventory().getInventoryItemById(chosenItemId);
                         amount = getAmount(itemChosen.getPurchaseCategory());
                         mapItemsChosenToAmount.put(itemChosen, amount);
+                        ePurchaseCategory category = itemChosen.getPurchaseCategory();
+                        System.out.println(amount + " " + (category == ePurchaseCategory.WEIGHT ? "kgs of " : "") + itemChosen.getItemName() + " has been added to your cart");
                     }
                     break;
 
@@ -630,7 +625,7 @@ public class UIMain {
     }
 
     private static Date getOrderDateFromUser() {
-        Date date = new Date();
+        Date date;
         SimpleDateFormat dateTimeFormat = new SimpleDateFormat("dd/MM-kk:mm");
         dateTimeFormat.setLenient(false);
         Scanner in = new Scanner(System.in);

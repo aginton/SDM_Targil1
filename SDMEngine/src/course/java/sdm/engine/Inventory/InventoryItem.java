@@ -15,7 +15,6 @@ public class InventoryItem implements Comparable<InventoryItem> {
         this.inventoryItemId = item.getId();
         this.itemName = item.getName();
         this.purchaseCategory = ePurchaseCategory.valueOf(item.getPurchaseCategory().toUpperCase());
-        //System.out.printf("Created InventoryItem %d!", inventoryItemId);
     }
 
     public InventoryItem(InventoryItem item){
@@ -24,7 +23,6 @@ public class InventoryItem implements Comparable<InventoryItem> {
         this.itemName = item.getItemName();
     }
 
-    //Getters
     public int getInventoryItemId() {
         return inventoryItemId;
     }
@@ -37,11 +35,8 @@ public class InventoryItem implements Comparable<InventoryItem> {
         return purchaseCategory;
     }
 
-
-    // Currently using default equals hashCode
     @Override
     public boolean equals(Object o) {
-       // System.out.println("In equals");
         if (this == o) return true;
 
         if (o == null || getClass() != o.getClass()) return false;

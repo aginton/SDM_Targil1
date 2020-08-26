@@ -145,7 +145,6 @@ public class Store {
         if (o == null || getClass() != o.getClass()) return false;
         Store store = (Store) o;
 
-
         return storeId == store.storeId &&
                 deliveryPpk == store.deliveryPpk &&
                 storeName.equals(store.storeName) &&
