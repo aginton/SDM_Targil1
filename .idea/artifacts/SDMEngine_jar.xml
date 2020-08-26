@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="SDMEngine:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/SDMEngine_jar</output-path>
+    <root id="archive" name="SDMEngine.jar">
+      <element id="module-output" name="SDMEngine" />
+    </root>
+  </artifact>
+</component>

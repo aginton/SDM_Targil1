@@ -1,0 +1,4 @@
+Manifest-Version: 1.0
+Main-Class: course.java.sdm.console.UIMain
+Class-Path: SDMEngine.jar
+
