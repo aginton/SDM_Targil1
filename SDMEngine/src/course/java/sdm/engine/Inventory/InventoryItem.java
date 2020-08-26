@@ -37,20 +37,7 @@ public class InventoryItem implements Comparable<InventoryItem> {
         return purchaseCategory;
     }
 
-//    public void updateAvePrice(){
-//        float sum = 0f;
-//        for (course.java.sdm.engine.Store store: storesCarryingItem){
-//            sum += store.getMapItemToPrices().get(inventoryItemId);
-//        }
-//
-//        this.avePrice = (sum / storesCarryingItem.size());
-//    }
-//
-//    public void addCarryingStore(course.java.sdm.engine.Store store){
-//        storesCarryingItem.add(store);
-//    }
 
-    //https://www.codexpedia.com/java/java-set-and-hashset-with-custom-class/
     // Currently using default equals hashCode
     @Override
     public boolean equals(Object o) {
@@ -67,9 +54,7 @@ public class InventoryItem implements Comparable<InventoryItem> {
         }
     }
 
-    //https://stackoverflow.com/questions/17355690/contains-and-remove-methods-for-instances-user-defined-classes-in-a-list
 
-    //https://stackoverflow.com/questions/5110376/hashset-contains-problem-with-custom-objects   <-- "never let hash value depend on mutable field"
     @Override
     public int hashCode() {
         return Objects.hash(inventoryItemId, itemName, purchaseCategory);
@@ -78,10 +63,6 @@ public class InventoryItem implements Comparable<InventoryItem> {
     @Override
     public int compareTo(InventoryItem o) {
         return this.getInventoryItemId() - o.getInventoryItemId();
-        //return 0;
     }
-
-    //TODO: See how to sort list of InventoryItems based on itemIds
-    //https://stackoverflow.com/questions/13491450/java-sorting-user-defined-objects
 
 }

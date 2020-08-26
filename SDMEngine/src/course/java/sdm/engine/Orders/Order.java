@@ -26,7 +26,6 @@ public class Order {
                  Cart cart, Set<Store> storesBoughtFrom,
                  eOrderType orderType) {
 
-
         if (orderType == eOrderType.STATIC_ORDER || orderType == eOrderType.DYNAMIC_ORDER) {
             numOfOrders++;
             this.orderId = new OrderId(numOfOrders, -1);
@@ -58,14 +57,21 @@ public class Order {
 
     public OrderId getOrderId(){return orderId;}
 
-//    public String getStoreName(){return storeName;}
-
     public int getNumberOfStoresInvolved() {
         return storesBoughtFrom.size();
     }
 
     public eOrderType getOrderType() {
         return orderType;
+    }
+
+    public float getCartTotal() {return cart.getCartTotalPrice();}
+
+    public float getDeliveryCost(){return deliveryCost;}
+    public Date getOrderDate(){return orderDate;}
+
+    public Cart getCartForThisOrder() {
+        return cart;
     }
 
     @Override
@@ -84,18 +90,4 @@ public class Order {
     public int hashCode() {
         return Objects.hash(orderId, userLocation, orderDate, deliveryCost, cart);
     }
-
-    public float getCartTotal() {return cart.getCartTotalPrice();}
-    public float getDeliveryCost(){return deliveryCost;}
-
-    public Date getOrderDate(){return orderDate;}
-
-//    public List<Integer> getUserLocation() {
-//        return userLocation;
-//    }
-
-    public Cart getCartForThisOrder() {
-        return cart;
-    }
-
 }

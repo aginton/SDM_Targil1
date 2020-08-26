@@ -23,7 +23,6 @@ public class Cart {
     }
 
     public int getNumItemsInCart() {
-
         int numberOfItems = 0;
         for(CartItem item : cart.values()) {
             if (item.getPurchaseCategory() == ePurchaseCategory.QUANTITY) {
@@ -51,32 +50,22 @@ public class Cart {
     }
 
     public void add(CartItem cartItem) {
-//        if (item.getPurchaseCategory() == ePurchaseCategory.QUANTITY)
-//            this.numberOfItemsInCart += item.getAmount();
-//
-//        else if (item.getPurchaseCategory() == ePurchaseCategory.WEIGHT)
-//            this.numberOfItemsInCart++;
-//
-//        this.cartTotalPrice += item.getPrice() * item.getAmount();
-//        int k = item.getItemId();
-
         int id = cartItem.getInventoryItemId();
         cartTotalPrice += cartItem.getPrice()*cartItem.getItemAmount();
+
         if (cart.containsKey(id)) {
             CartItem existingItem = cart.get(id);
             float amountInCart = existingItem.getItemAmount();
             existingItem.setItemAmount(amountInCart + cartItem.getItemAmount());
             return;
         }
-        cart.put(id, cartItem);
 
+        cart.put(id, cartItem);
     }
 
     public Set<Store> getStoresBoughtFrom() {
-
         Set<Store> storesBoughtFrom = new HashSet<>();
         cart.forEach((k,v) -> storesBoughtFrom.add(v.getStoreBoughtFrom()));
-
         return storesBoughtFrom;
     }
 }

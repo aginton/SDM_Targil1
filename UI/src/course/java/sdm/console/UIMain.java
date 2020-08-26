@@ -9,12 +9,12 @@ import course.java.sdm.engine.Orders.Order;
 import course.java.sdm.engine.Orders.eOrderType;
 import course.java.sdm.engine.SDM.SDM;
 import course.java.sdm.engine.Store.Store;
-import course.java.sdm.engine.jaxb.schema.generated.SDMItem;
-import course.java.sdm.engine.jaxb.schema.generated.SDMSell;
-import course.java.sdm.engine.jaxb.schema.generated.*;
+//import course.java.sdm.engine.jaxb.schema.generated.SDMItem;
+//import course.java.sdm.engine.jaxb.schema.generated.SDMSell;
+//import course.java.sdm.engine.jaxb.schema.generated.*;
 import course.java.sdm.engine.jaxb.schema.generated.SDMStore;
-import course.java.sdm.engine.jaxb.schema.generated.SDMStores;
-import course.java.sdm.engine.jaxb.schema.generated.SuperDuperMarketDescriptor;
+//import course.java.sdm.engine.jaxb.schema.generated.SDMStores;
+//import course.java.sdm.engine.jaxb.schema.generated.SuperDuperMarketDescriptor;
 
 import java.io.File;
 import java.text.DecimalFormat;
@@ -95,14 +95,16 @@ public class UIMain {
                     break;
 
                 case "q":
-                    System.out.println("Goodbye!");
-                    return;
-
+                    wantsToQuit = true;
+                    break;
 
                 default:
                     System.out.println("Invalid input. " + operator + " does not correspond to any command!");
             }
         }
+
+        System.out.println("Goodbye!");
+
     }
 
     /*This function has user select a store and then allows them to either
@@ -119,7 +121,7 @@ public class UIMain {
 
         //1. Show list of stores and ask user for id of store to update
         while (!isValidStoreChoice) {
-            System.out.println("\nWhich store inventory do you wish to update? Please enter store-id from the following list, or enter 'cancel' to go back to main menu:");
+            System.out.println("\nWhich store inventory do you wish to update? \nPlease enter store-id from the following list, or enter 'cancel' to go back to main menu:");
             printAvailableStores(sdmInstance);
             String input = in.nextLine().trim();
             if (input.equalsIgnoreCase("cancel"))
@@ -164,163 +166,81 @@ public class UIMain {
         }
     }
 
-    private static void updatePricesForStore(SDM sdmInstance, Store storeChoice) {
-        Scanner in = new Scanner(System.in);
-        Inventory inventory = sdmInstance.getInventory();
-        InventoryItem chosenItem = null;
-        Boolean isExistingItem = false, isSoldByStore = false, isValidPrice = false;
-        int price = 0;
 
-        List<Integer> existingInventoryItemIds = inventory.getListOfInventoryItemIds();
-        List<Integer> itemsSoldAtStore = storeChoice.getInventoryItems().stream().map(item -> item.getInventoryItemId()).collect(Collectors.toList());
 
-        //0. Make sure store choice has items to sell
-        if (itemsSoldAtStore.size() == 0) {
-            System.out.printf("\n%s is currently not selling any items!", storeChoice.getStoreName());
+
+    private static void updatePricesForStore(SDM sdm, Store storeChoice) {
+        if (storeChoice.getInventoryItems().size() == 0){
+            System.out.printf("Store %s's inventory is currently empty ):");
             return;
         }
+        Scanner in = new Scanner(System.in);
+        System.out.printf("Which item's price do you wish to update? Enter Item-ID from the following list, or enter 'cancel' to go back to previous menu:\n", storeChoice.getStoreName());
+        printItemsSoldByStore(sdm, storeChoice);
+        String userInput = in.nextLine().trim();
 
-        //1. Get item to update
-        while (!isExistingItem || !isSoldByStore) {
-            System.out.printf("Which item's price do you wish to update? Enter Item-ID from the following list, or enter 'cancel' to go back to previous menu:\n", storeChoice.getStoreName());
-            //TODO: (Maybe) make it so only items sold at storeChoice are shown
-            printPriceTableForStore(sdmInstance, storeChoice);
-            String input = in.nextLine().trim();
-            if (input.equalsIgnoreCase("cancel"))
-                return;
+        if (checkIfInputIsAllowed(userInput, null)){
+            InventoryItem chosenItem = storeChoice.getInventoryItemById(Integer.parseInt(userInput));
+            if ( chosenItem!= null){
 
-            isExistingItem = checkIfInputIsAllowed(input, existingInventoryItemIds);
+                while (true) {
+                    System.out.printf("Enter price for %s at store %s. Please enter a positive integer, or enter 'cancel' to go back to previous menu:\n", chosenItem.getItemName(), storeChoice.getStoreName());
+                    String input = in.nextLine().trim();
 
-            //1.1. ID must correspond to existing item AND item not currently sold by store
-            if (!isExistingItem) {
-                System.out.printf("Error: No item with id=%s can be found in system!\n", input);
-            } else {
-                isSoldByStore = checkIfInputIsAllowed(input, itemsSoldAtStore);
-                if (!isSoldByStore) {
-                    System.out.printf("Error: Store %s does not sell item with id=%s\n", storeChoice.getStoreName(), input);
-                } else {
-                    chosenItem = inventory.getInventoryItemById(Integer.parseInt(input));
+                    if (input.equalsIgnoreCase("cancel"))
+                        return;
+
+                    if (checkIfInputIsAllowed(input, null)) {
+                        int price = Integer.parseInt(input);
+                        if (price > 0) {
+                            sdm.updateItemPriceAtStore(chosenItem, storeChoice, price);
+                            System.out.printf("\nPrice of item %s at store %s was successfully changed to %d", chosenItem.getItemName(), storeChoice.getStoreName(), price);
+                            return;
+                        } else
+                            System.out.println("Error: Price must be a positive, whole number!");
+                    }
                 }
             }
         }
-
-        //2. Update price
-        while (!isValidPrice) {
-            System.out.printf("What price do you want to set for %s at store %s. Please enter a positive integer, or enter 'cancel' to go back to previous menu:\n", chosenItem.getItemName(), storeChoice.getStoreName());
-            String input = in.nextLine().trim();
-
-            if (input.equalsIgnoreCase("cancel"))
-                return;
-
-            if (checkIfInputIsAllowed(input, null)) {
-                price = Integer.parseInt(input);
-                if (price > 0) {
-                    isValidPrice = true;
-                } else
-                    System.out.println("Error: Price must be a positive number!");
-            }
-        }
-
-        storeChoice.getMapItemToPrices().put(chosenItem.getInventoryItemId(), price);
-        sdmInstance.getInventory().updateAvePrice();
-        System.out.printf("\nPrice of item %s at store %s was successfully changed to %d", chosenItem.getItemName(), storeChoice.getStoreName(), price);
+        System.out.printf("Invalid Input: %s has no item with id = %s\n", storeChoice.getStoreName(), userInput);
     }
+
 
     private static void removeItemFromStoreInventory(SDM sdm, Store storeChoice) {
+        if (storeChoice.getInventoryItems().size() == 0){
+            System.out.printf("Store %s's inventory is currently empty ):");
+            return;
+        }
         Scanner in = new Scanner(System.in);
-        Inventory inventory = sdm.getInventory();
-        InventoryItem chosenItem = null;
-        Boolean isExistingItem = false, isSoldByStore = false;
+        System.out.printf("Enter ID of item that is to be BANISHED by %s! Please select from the following list, or enter 'cancel' to go back to previous menu:\n", storeChoice.getStoreName());
+        printItemsSoldByStore(sdm, storeChoice);
 
-        List<Integer> existingInventoryItemIds = inventory.getListOfInventoryItemIds();
-        List<Integer> itemsSoldAtStore = storeChoice.getInventoryItems().stream().map(item -> item.getInventoryItemId()).collect(Collectors.toList());
-
-        //0. Make sure store choice has items to sell
-        if (itemsSoldAtStore.size() == 0) {
-            System.out.printf("\n%s is currently not selling any items!", storeChoice.getStoreName());
-            return;
-        }
-
-        //1. Get item to update
-        while (!isExistingItem || !isSoldByStore) {
-            System.out.printf("Enter ID of item that is to be BANISHED by %s! Please select from the following list, or enter 'cancel' to go back to previous menu:\n", storeChoice.getStoreName());
-            //TODO: (Maybe) make it so only items sold at storeChoice are shown
-            printPriceTableForStore(sdm, storeChoice);
-            String input = in.nextLine().trim();
-            if (input.equalsIgnoreCase("cancel"))
-                return;
-
-            isExistingItem = checkIfInputIsAllowed(input, existingInventoryItemIds);
-            isSoldByStore = checkIfInputIsAllowed(input, itemsSoldAtStore);
-
-            //1.1. ID must correspond to existing item AND item not currently sold by store
-            if (!isExistingItem) {
-                System.out.printf("Error: No item with id=%s can be found in system!\n", input);
-            } else {
-                if (!isSoldByStore) {
-                    System.out.printf("Error: Store %s does not sell item with id=%s\n", storeChoice.getStoreName(), input);
-                } else {
-                    chosenItem = inventory.getInventoryItemById(Integer.parseInt(input));
-                }
-            }
-        }
-
-        if (inventory.getMapItemsToStoresWithItem().get(chosenItem).size() == 1) {
-            System.out.printf("\nCannot perform remove: Store %s is currently the only store selling item-id %d (%s)",
-                    storeChoice.getStoreName(), chosenItem.getInventoryItemId(), chosenItem.getItemName());
-            return;
-        }
-
-        sdm.removeItemFromStore(chosenItem, storeChoice);
-        System.out.printf("\nItem %d was successfully BANISHED from store %s! MWA-HA-HA-HA!!!", chosenItem.getInventoryItemId(), storeChoice.getStoreName());
-
+        String output = sdm.removeItemFromStore(in.nextLine().trim(), storeChoice);
+        System.out.println(output);
     }
 
-    private static void addExistingItemToStoreInventory(SDM sdmInstance, Store storeChoice) {
-        Scanner in = new Scanner(System.in);
-        Inventory inventory = sdmInstance.getInventory();
-        InventoryItem chosenItem = null;
-
-        Boolean isExistingId = false, canBeAddedToStore = false, isValidPrice = false;
-        int price = 0;
-
-        List<Integer> existingInventoryItemIds = inventory.getListOfInventoryItemIds();
-        List<Integer> listItemsAllowedToAddToStore = inventory.getListOfItemsNotSoldByStore(storeChoice)
-                .stream().map(item -> item.getInventoryItemId()).collect(Collectors.toList());
-
-
-        //0. Make sure that there exists an item that can be added to storeChoice's inventory. If there isn't, return.
-        if (listItemsAllowedToAddToStore.size() == 0) {
+    private static void addExistingItemToStoreInventory(SDM sdm, Store storeChoice) {
+        if (sdm.getInventory().getListOfItemsNotSoldByStore(storeChoice).size() == 0){
             System.out.printf("No existing items can currently be added to store's inventory! %s already has everything!\n", storeChoice.getStoreName());
             return;
         }
 
-        //1. Show list of existing items that are not currently sold by store
-        while (!isExistingId || !canBeAddedToStore) {
-            System.out.printf("Enter Item-ID for item you wish to add to %s's inventory. Please select from the following list, or enter 'cancel' to go back to previous menu:\n", storeChoice.getStoreName());
-            printItemsNotSoldByStore(sdmInstance, storeChoice);
-            String input = in.nextLine().trim();
-            if (input.equalsIgnoreCase("cancel"))
-                return;
+        Scanner in = new Scanner(System.in);
+        System.out.printf("Enter Item-ID for item you wish to add to %s's inventory. Please select from the following list, or enter 'cancel' to go back to previous menu:\n", storeChoice.getStoreName());
+        printItemsNotSoldByStore(sdm, storeChoice);
+        String userInput = in.nextLine().trim();
+        String output = sdm.canAddExistingItemToStore(userInput, storeChoice);
 
-            isExistingId = checkIfInputIsAllowed(input, existingInventoryItemIds);
-            canBeAddedToStore = checkIfInputIsAllowed(input, listItemsAllowedToAddToStore);
-
-            //1.1. Make sure item exists
-            if (!isExistingId) {
-                System.out.printf("Error: No item with id=%s can be found in system!\n", input);
-            } else {
-                if (!canBeAddedToStore) {
-                    System.out.printf("Error: Store %s already contains an item with id=%s\n", storeChoice.getStoreName(), input);
-                } else {
-                    chosenItem = inventory.getInventoryItemById(Integer.parseInt(input));
-                }
-            }
+        if (!output.isEmpty()){
+            System.out.println(output);
+            return;
         }
+        InventoryItem chosenItem = sdm.getInventory().getInventoryItemById(Integer.parseInt(userInput));
+        int price = 0;
+        Boolean isValidPrice = false;
 
-        //3. Get price to set for item
         while (!isValidPrice) {
-            System.out.printf("Enter price for %s at store %s? Please enter a positive integer, or enter 'cancel' to go back to previous menu:\n", chosenItem.getItemName(), storeChoice.getStoreName());
+            System.out.printf("Enter price for %s at store %s. Please enter a positive integer, or enter 'cancel' to go back to previous menu:\n", chosenItem.getItemName(), storeChoice.getStoreName());
             String input = in.nextLine().trim();
 
             if (input.equalsIgnoreCase("cancel"))
@@ -331,16 +251,14 @@ public class UIMain {
                 if (price > 0) {
                     isValidPrice = true;
                 } else
-                    System.out.println("Error: Price cannot be a negative number!");
+                    System.out.println("Error: Price must be a positive, whole number!");
             }
         }
 
         System.out.printf("Adding item %s (id=%d) to %s's inventory, at price=%d\n",
                 chosenItem.getItemName(), chosenItem.getInventoryItemId(), storeChoice.getStoreName(), price);
 
-        sdmInstance.addInventoryItemToStore(chosenItem, storeChoice, price);
-        System.out.printf("Current inventory for store %s\n", storeChoice.getStoreName());
-        printPriceTableForStore(sdmInstance, storeChoice);
+        sdm.addInventoryItemToStore(chosenItem, storeChoice, price);
     }
 
 
@@ -355,6 +273,21 @@ public class UIMain {
                     item.getPurchaseCategory());
         }
     }
+
+    private static void printItemsSoldByStore(SDM sdmInstance, Store storeChoice) {
+        System.out.printf("\n| item-Id | %-15s | Purchase-Category | Current Price |", "Item-Name");
+        System.out.println("\n-----------------------------------------------------------------");
+        List<InventoryItem> res = storeChoice.getInventoryItems();
+        for (InventoryItem item : res) {
+            System.out.printf("|%-9d|%-17s|%-19s| %-13d |\n",
+                    item.getInventoryItemId(),
+                    item.getItemName(),
+                    item.getPurchaseCategory(),
+                    storeChoice.getMapItemToPrices().get(item.getInventoryItemId()));
+        }
+    }
+
+
 
     private static void viewOrderHistory(SDM sdmInstance) {
         List<Order> history = sdmInstance.getOrderHistory().getOrders();
@@ -372,7 +305,6 @@ public class UIMain {
                     Store storeForOrder = iterator.next();
                     int storeId = storeForOrder.getStoreId();
                     String storeName = storeForOrder.getStoreName();
-
                     System.out.printf("| Order-id: %d | %-10s | Store-Id: %-5d | %-13s |\n\n", orderId, date, storeId, storeName);
                 } else {
                     //dynamic order
@@ -463,7 +395,7 @@ public class UIMain {
         //3. Add items to cart
         while (true) {
             System.out.println("\nTo add an item to your cart, enter 'add'. To cancel order, enter 'q'");
-            System.out.println("To finish, enter 'finish'");
+            System.out.println("When finished, enter 'checkout'");
 
             userInput = in.nextLine().toLowerCase().trim();
             switch (userInput) {
@@ -484,7 +416,7 @@ public class UIMain {
                     }
                     break;
 
-                case "finish":
+                case "checkout":
                     System.out.println("calculating the cheapest cart for you...\n");
                     try {
                         TimeUnit.SECONDS.sleep(1);
@@ -575,9 +507,9 @@ public class UIMain {
         Scanner in = new Scanner(System.in);
         String input;
 
-        System.out.println("\nWhich store would you like to order from? Please enter store-id from the following list, or enter 'Q' to go back to main menu:");
         //1. Show stores and ask user for Store id
         while (!isValidStore) {
+            System.out.println("\nWhich store would you like to order from? \nPlease enter store-id from the following list, or enter 'Q' to go back to main menu:");
             printAvailableStores(sdmInstance);
             input = in.nextLine().trim();
             if (input.equalsIgnoreCase("q"))
@@ -601,19 +533,19 @@ public class UIMain {
         if (userLocation.contains(-1))
             return;
 
-        float distance = getDistance(userLocation, storeChoice.getStoreLocation());
+        float distance = storeChoice.getDistance(userLocation);
         float deliveryCost = distance * storeChoice.getDeliveryPpk();
 
         //4. Choosing items to buy
         while (true) {
-            System.out.println("\nTo add an item to your cart, enter 'add'. \nWhen finished, enter 'finish'. \nTo cancel current order, enter 'cancel'");
+            System.out.println("\nTo add an item to your cart, enter 'add'. \nWhen finished, enter 'checkout'. \nTo cancel current order, enter 'Q'");
             System.out.println("==========================================================================================================================");
             System.out.println("\nCart summary:");
             printCartDetailsForStaticOrder(cart);
 
             input = in.nextLine().toLowerCase().trim();
             switch (input) {
-                case "finish":
+                case "checkout":
                     if (!cart.getCart().isEmpty()) {
                         printCurrentOrderSummary(storeChoice, orderDate, userLocation, cart, distance, deliveryCost);
                         System.out.println("To confirm order, enter 'confirm'. To cancel order and go back to main menu, enter 'q':");
@@ -653,10 +585,10 @@ public class UIMain {
                     Boolean isValidPriceId = false;
 
                     while (!isValidPriceId) {
-                        System.out.println("Please enter the Id for the item you wish to purchase. Enter 'cancel' to go back to previous menu: ");
+                        System.out.println("Please enter the Id for the item you wish to purchase. Enter 'Q' to go back to previous menu: ");
                         printPriceTableForStore(sdmInstance, storeChoice);
                         input = in.nextLine().trim();
-                        if (input.equalsIgnoreCase("cancel"))
+                        if (input.equalsIgnoreCase("q"))
                             break;
                         isValidPriceId = checkIfValidPriceId(sdmInstance, storeChoice, input);
                     }
@@ -674,7 +606,7 @@ public class UIMain {
                     }
                     break;
 
-                case "cancel":
+                case "q":
                     return;
 
                 default:
@@ -686,35 +618,30 @@ public class UIMain {
     private static void printCurrentOrderSummary(Store storeChoice, Date orderDate, List<Integer> userLocation, Cart cart, float distance, float deliveryCost) {
 
         System.out.println("Store: " + storeChoice.getStoreName());
-        //Explains how to format date: https://www.tutorialspoint.com/Date-Formatting-Using-printf
         System.out.printf("Order Date: %1$td/%1$tm %1$tH:%1$tM\n", orderDate);
         System.out.println("My location: (" + userLocation.get(0) + ", " + userLocation.get(1) + ")");
         System.out.printf("PPK: %d\n", storeChoice.getDeliveryPpk());
         System.out.printf("Distance from store: %.2f\n", distance);
-
         System.out.printf("\nDelivery fee: %.2f", deliveryCost);
         System.out.println("\nCart subtotal:" + cart.getCartTotalPrice());
         System.out.print("----------------");
         float total = cart.getCartTotalPrice() + deliveryCost;
-        System.out.printf("\nTotal: %.2f nis", total);
-
-        System.out.println("");
+        System.out.printf("\nTotal: %.2f nis\n", total);
     }
 
     private static Date getOrderDateFromUser() {
         Date date = new Date();
-
         SimpleDateFormat dateTimeFormat = new SimpleDateFormat("dd/MM-kk:mm");
         dateTimeFormat.setLenient(false);
         Scanner in = new Scanner(System.in);
 
         while (true) {
             try {
-                System.out.println("Please enter date and time for delivery as dd/MM-hh:mm (day/month-hour:min). \nEnter 'cancel' to go back to main menu");
+                System.out.println("Please enter date and time for delivery as dd/MM-hh:mm (day/month-hour:min).");
+                System.out.println("Enter 'Q' to go back to main menu.");
 
-                //TODO: Check how to get date while ignoring white spaces
                 String input = in.nextLine();
-                if (input.equalsIgnoreCase("cancel"))
+                if (input.equalsIgnoreCase("q"))
                     return null;
 
                 date = dateTimeFormat.parse(input);
@@ -723,34 +650,12 @@ public class UIMain {
                     return date;
 
             } catch (ParseException e) {
-//                System.out.println("Date and time are not in the correct pattern");
-                //TODO: (Maybe) explain exactly what is wrong with date/time input
                 System.out.println("Error: Invalid Date and time");
             }
         }
     }
 
-    public static float getDistance(List<Integer> userLocation, List<Integer> storeLocation) {
-        if (userLocation.size() != 2 || storeLocation.size() != 2) {
-            System.out.println("Error: Input lists must each contain 2 points!");
-            return -1;
-        }
-        int xDelta = userLocation.get(0) - storeLocation.get(0);
-        int yDelta = userLocation.get(1) - storeLocation.get(1);
-        return (float) Math.sqrt((xDelta * xDelta) + (yDelta * yDelta));
-    }
-
-    //https://kodejava.org/how-do-i-align-string-print-out-in-left-right-center-alignment/
-    //https://howtodoinjava.com/java/string/left-right-or-center-align-string/
-    //https://www.java67.com/2014/06/how-to-format-float-or-double-number-java-example.html#:~:text=format(%22%25.,float%20data%20type%20in%20Java.
-    //https://www.homeandlearn.co.uk/java/java_formatted_strings.html
-    //https://stackoverflow.com/questions/15961130/align-printf-output-in-java
-
-
     private static void printCartDetailsForStaticOrder(Cart cart) {
-//        System.out.println("Just entered printCartDetails");
-//        System.out.println("Is myCart empty?: " + (myCart==null));
-
         if (!cart.isEmpty()) {
             System.out.printf("| Item-Id | %-14s | Unit price | %-19s | %-15s |\n", "Item-Name", "Amount", "Cost");
             System.out.println("---------------------------------------------------------------------------------");
@@ -798,28 +703,27 @@ public class UIMain {
             return true;
 
         } catch (NumberFormatException nfe) {
-            //System.out.printf("Error: %s could not be parsed as Int!\n", input);
             return false;
         }
     }
 
-    //TODO: Make it so doesn't print "cannot parse" twice
     private static Boolean checkIfValidPriceId(SDM sdm, Store storeChoice, String input) {
         List<InventoryItem> fullInventory = sdm.getInventory().getListInventoryItems();
         List<InventoryItem> storeInventory = storeChoice.getInventoryItems();
-
         List<Integer> existingItems = fullInventory.stream().map(i -> i.getInventoryItemId()).collect(Collectors.toList());
         List<Integer> storeItemIds = storeInventory.stream().map(i -> i.getInventoryItemId()).collect(Collectors.toList());
         Boolean isValid = true;
 
         try {
             int inputAsInt = Integer.parseInt(input);
+            boolean isExistingItem = existingItems.contains(inputAsInt);
+            boolean isSoldAtStore = storeItemIds.contains(inputAsInt);
 
-            if (!existingItems.contains(inputAsInt)) {
+            if (!isExistingItem) {
                 System.out.println("Invalid input: No reference found for itemId=" + inputAsInt);
                 isValid = false;
             }
-            if (!storeItemIds.contains(inputAsInt)) {
+            if (isExistingItem && !isSoldAtStore) {
                 System.out.printf("Invalid input: Item %d (%s) is not currently sold at store %s\n",
                         inputAsInt, sdm.getInventory().getInventoryItemById(inputAsInt).getItemName(), storeChoice.getStoreName());
                 isValid = false;
@@ -835,14 +739,10 @@ public class UIMain {
     private static void printPriceTableForStore(SDM sdm, Store storeChoice) {
         List<InventoryItem> fullInventory = sdm.getInventory().getListInventoryItems();
         List<InventoryItem> storeInventory = storeChoice.getInventoryItems();
-
         String prompt = "";
         prompt = prompt.concat(String.format("\n|%s| %-15s |%s| %-13s |", " Item-Id ", "Item-Name", " Purchase-Category ", "Price"));
         prompt = prompt.concat("\n----------------------------------------------------------------");
 
-
-        //TODO: maybe change structure of Store Inventory to hold CartItems instead?
-        //Create string listing items and their details
         for (InventoryItem item : fullInventory) {
             boolean isSoldAtStore = storeInventory.contains(item);
 
@@ -882,10 +782,10 @@ public class UIMain {
                 spotNotTaken = true;
 
                 System.out.println("What is your current location? (Please enter comma-separated whole numbers between [1,50])");
-                System.out.println("Enter 'cancel' to go back to main menu.");
+                System.out.println("Enter 'Q' to go back to main menu.");
                 String input = src.nextLine();
 
-                if (input.equalsIgnoreCase("cancel")) {
+                if (input.equalsIgnoreCase("q")) {
                     return Collections.singletonList(-1);
                 }
                 String[] lineVector = input.split(",");
@@ -923,22 +823,8 @@ public class UIMain {
     }
 
 
-    private static boolean checkUserWantsToCancelOrder() {
-        Scanner in = new Scanner(System.in);
-        while (true) {
-            System.out.println("Are you sure you want to cancel current order? (Y/N)");
-            //System.out.println("Cancel operation? (Y/N)");
-            String input = in.nextLine().trim();
-            if (input.equalsIgnoreCase("y"))
-                return true;
-
-            if (input.equalsIgnoreCase("n"))
-                return false;
-        }
-    }
 
     private static float getAmount(ePurchaseCategory purchaseCat) {
-        //boolean isValidQuantity = false;
         float res;
         Scanner in = new Scanner(System.in);
         DecimalFormat df;
@@ -947,7 +833,6 @@ public class UIMain {
             try {
                 if (purchaseCat == ePurchaseCategory.WEIGHT) {
                     df = new DecimalFormat("0.00");
-                    //TODO: If user enters negative number, explain what problem is
                     System.out.println("Please enter order weight in kgs: ");
                     res = in.nextFloat();
                     if (res > 0)
@@ -957,7 +842,6 @@ public class UIMain {
                     System.out.println("Please enter order quantity: ");
                     res = in.nextFloat();
 
-                    //https://stackoverflow.com/questions/9898512/how-to-test-if-a-double-is-an-integer
                     if (res == Math.round(res) && res > 0) {
                         return Math.round(res);
                     }
@@ -986,7 +870,6 @@ public class UIMain {
 
     private static void viewOrdersForStore(Store store) {
         List<Order> orders = store.getOrders();
-        //System.out.println("\nOrders: ");
         if (orders.isEmpty()) {
             System.out.println("\nNo orders yet for store " + store.getStoreId());
         } else {
@@ -999,14 +882,12 @@ public class UIMain {
     }
 
     private static void viewOrderDetails(Order o) {
-
         String date = new SimpleDateFormat("dd/MM\thh:mm").format(o.getOrderDate());
-        System.out.printf("| %-10s | %-8s | %-23d | %-13.2f | %-13.2f | %-7.2f |\n", date, o.getOrderId().toString(), o.getCartForThisOrder().getNumItemsInCart(), o.getCartTotal(), o.getDeliveryCost(), o.getCartTotal() + o.getDeliveryCost());
-
+        System.out.printf("| %-10s | %-8s | %-23d | %-13.2f | %-13.2f | %-7.2f |\n",
+                date, o.getOrderId().toString(), o.getCartForThisOrder().getNumItemsInCart(), o.getCartTotal(), o.getDeliveryCost(), o.getCartTotal() + o.getDeliveryCost());
     }
 
     private static void viewAllItemsInSystem(SDM sdmInstance) {
-
         System.out.println("All items in system:");
         Inventory inventory = sdmInstance.getInventory();
         System.out.printf("\n| item-Id | %-15s | Purchase-Category | Amount of stores carrying item |   Ave price   | Total amount sold | ", "Item-Name");
@@ -1048,7 +929,6 @@ public class UIMain {
             else if (item.getPurchaseCategory() == ePurchaseCategory.QUANTITY)
                 s = s.concat(" pckgs");
 
-
             System.out.printf("| %-7d | %-15s | %-18s| %-5d nis | %-11s |\n", id, item.getItemName(), item.getPurchaseCategory(),
                     price, s);
 
@@ -1057,13 +937,11 @@ public class UIMain {
 
 
     private static void showPossibleCommands(boolean fileSuccessfullyLoaded) {
-        //System.out.println("Press '1' to load a new file, or 'Q' to quit at any time");
         System.out.println("\nPlease select an option from the following menu. Enter 'Q' to quit:");
         System.out.println("==============================================================================================");
         System.out.println("1) Load a new SDM file");
 
         if (fileSuccessfullyLoaded) {
-            //System.out.println("1)Create a new student");
             System.out.println("2) Display store details");
             System.out.println("3) View all items in system");
             System.out.println("4) Place an order");
@@ -1074,8 +952,6 @@ public class UIMain {
     }
 
     public static String readFilePath() {
-        boolean isValidPath = false;
-        String s;
         File f;
         Scanner in = new Scanner(System.in);
 
@@ -1103,28 +979,6 @@ public class UIMain {
             } catch (NullPointerException npe) {
                 System.out.println("Null pointer exception: " + npe.getMessage());
             }
-        }
-    }
-
-
-    private static void printDetailsOfSDM(SuperDuperMarketDescriptor sdm) {
-        List<SDMItem> sdmItems = sdm.getSDMItems().getSDMItem();
-        List<SDMStore> sdmStores = sdm.getSDMStores().getSDMStore();
-
-        System.out.println("Items: [");
-        for (SDMItem item : sdmItems) {
-            System.out.println("id= " + item.getId() + ", name= " + item.getName() + ", purchase Category = " + item.getPurchaseCategory() + ",");
-        }
-
-        System.out.println("\nStores: [");
-        for (SDMStore store : sdmStores) {
-            String loc = "[" + store.getLocation().getY() + ", " + store.getLocation().getY() + "]";
-            String sells = "sells = [";
-            for (SDMSell itemSold : store.getSDMPrices().getSDMSell()) {
-                sells = sells.concat(" {item-id=" + itemSold.getItemId() + ", price=" + itemSold.getPrice() + "},");
-            }
-            sells = sells.concat("]");
-            System.out.println("Store-Id=" + store.getId() + ", store-name= " + store.getName() + ", location= " + loc + ", " + sells);
         }
     }
 }

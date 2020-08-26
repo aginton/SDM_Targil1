@@ -18,13 +18,13 @@ import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import java.io.File;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class SDM {
 
     private String loadingErrorMessage="";
     private SuperDuperMarketDescriptor mySDM;
     private List<Store> stores;
-    // inventory and orderHistory are only created after validation
     private Inventory inventory;
     private Orders orderHistory;
 
@@ -48,23 +48,14 @@ public class SDM {
 
                 if (isSDMValidAppWise(sdm)) {
                     mySDM = sdm;
-                    //First create each inventory item
-                    //System.out.println("About to create inventory");
                     createInventory(sdm);
-                    //System.out.println("\nAll inventory items created!\n\n");
-
-                    //System.out.println("About to create stores");
                     createStores(sdm);
-                    //System.out.println("\nAll stores created!\n\n");
                     Order.setNumOfOrders(0);
-
                     inventory.updateStoresCarryingItems(stores);
                     inventory.updateAvePrice();
-
                     orderHistory = new Orders();
                     res = true;
                 }
-
             return res;
 
         } catch (JAXBException e) {
@@ -77,7 +68,6 @@ public class SDM {
 
     private void createInventory(SuperDuperMarketDescriptor sdm) {
         inventory = new Inventory();
-
         for (SDMItem sdmItem: sdm.getSDMItems().getSDMItem()){
             InventoryItem item = new InventoryItem(sdmItem);
             inventory.addNewItemToInventory(item);
@@ -105,18 +95,14 @@ public class SDM {
         }
     }
 
-    public boolean isXMLfileType(File file) {
-        return file.getName().endsWith(".xml");
-    }
 
     public boolean isSDMValidAppWise(SuperDuperMarketDescriptor sdm) {
-
         boolean areItemIdsUnique,areStoreIdsUnique,isStoreUsingUniqueItemIds, isStoreUsingExistingItemIds, isEachExistingItemSoldSomewhere, areLocationsLegal;
 
         List<SDMItem> sdmItems = sdm.getSDMItems().getSDMItem();
         List<SDMStore> sdmStores = sdm.getSDMStores().getSDMStore();
 
-        //Since we expect no duplicates, we can store Item and course.java.sdm.engine.Store ids as lists
+        //Since we expect no duplicates, we can store Item and Store ids in lists
         List<Integer> listOfItemIds = getListOfItemIds(sdmItems);
         List<Integer> listOfStoreIds = getListOfStoreIds(sdmStores);
 
@@ -138,15 +124,12 @@ public class SDM {
 
 
     public String getLoadingErrorMessage() {return loadingErrorMessage;}
-    public SuperDuperMarketDescriptor getSuperDuperMarketDescriptor(){return mySDM;}
 
-
-    public List<SDMItem> getListOfSDMItems(){return mySDM.getSDMItems().getSDMItem();}
     public List<SDMStore> getListOfSDMStores(){return mySDM.getSDMStores().getSDMStore();}
+
 
     public List<List<Integer>> getListOfStoreLocations(List<SDMStore> sdmStores) {
         List<List<Integer>> res = new ArrayList<>();
-
         for (SDMStore store: sdmStores){
             res.add(getStoreLocation(store));
         }
@@ -208,7 +191,6 @@ public class SDM {
         Set<Integer> itemsSold = new HashSet<>();
 
         for (SDMStore store: sdmStores){
-
             for (SDMSell sold: store.getSDMPrices().getSDMSell()){
                 itemsSold.add(sold.getItemId());
             }
@@ -273,39 +255,22 @@ public class SDM {
     }
 
     public void addNewStaticOrder(Store storeChoice, Order order) {
-        //System.out.println("About to add order to storeChoice");
-            storeChoice.addOrder(order);
-
-        //System.out.println("Successfully added order to storeChoice!\n");
-
-        //System.out.println("About to add order to orderHistory");
+        storeChoice.addOrder(order);
         orderHistory.addOrder(order);
-
         inventory.updateSalesMap(order);
-        //System.out.println("Successfully added order to orderHistory!\n");
     }
 
     public void addNewDynamicOrder(Set <Store> storesBoughtFrom, Order order) {
-        //System.out.println("About to add order to storeChoice");
-
-        //Bought from multiple stores, add sub-orders to stores
         addSplittedOrdersToStores(storesBoughtFrom, order);
-        //System.out.println("Successfully added order to storeChoice!\n");
-
-        //System.out.println("About to add order to orderHistory");
         orderHistory.addOrder(order);
-
         inventory.updateSalesMap(order);
-        //System.out.println("Successfully added order to orderHistory!\n");
     }
 
     private void addSplittedOrdersToStores(Set<Store> storesBoughtFrom, Order order) {
-
         storesBoughtFrom.forEach(store -> {
             Cart cartForStore = ExtractCartForStore(store, order);
-            float deliveryCostForStore = calculateDeliveryCostForStore(store.getDeliveryPpk(),
-                                                                       order.getUserLocation(),
-                                                                       store.getStoreLocation());
+            float deliveryCostForStore = store.getDeliveryCost(order.getUserLocation());
+
             Set<Store> storeForThisSubOrder = new HashSet<Store>();
             storeForThisSubOrder.add(store);
             Order orderForStore = new Order(order.getUserLocation(),
@@ -318,19 +283,9 @@ public class SDM {
         });
     }
 
-    private float calculateDeliveryCostForStore(int deliveryPpk, List<Integer> userLocation, List<Integer> storeLocation) {
-
-        int xDelta = userLocation.get(0) -storeLocation.get(0);
-        int yDelta = userLocation.get(1) -storeLocation.get(1);
-        float distance = (float) Math.sqrt((xDelta*xDelta)+(yDelta*yDelta)) ;
-
-        return distance*deliveryPpk;
-    }
 
     private Cart ExtractCartForStore(Store store, Order order) {
-
         Cart cartForStore = new Cart();
-
         order.getCartForThisOrder().getCart().forEach((key,cartItem) -> {
             if (cartItem.getStoreBoughtFrom() == store) {
                 cartForStore.add(cartItem);
@@ -340,14 +295,9 @@ public class SDM {
         return cartForStore;
     }
 
-    public void addInventoryItemToStore(InventoryItem item, Store store, int price){
-        store.addItemToStoreInventory(item, price);
-        inventory.updateStoresCarryingItems(stores);
-        inventory.updateAvePrice();
-    }
+
 
     public Cart findCheapestCartForUser(HashMap<InventoryItem, Float> mapItemsChosenToAmount) {
-
         Cart cart = new Cart();
 
         mapItemsChosenToAmount.forEach((item,amount) -> {
@@ -361,14 +311,6 @@ public class SDM {
     }
 
     public Store findCheapestStoreForItem(InventoryItem item) {
-
-//        Comparator<course.java.sdm.engine.Store> comparator = new Comparator<course.java.sdm.engine.Store>() {
-//            @Override
-//            public int compare(course.java.sdm.engine.Store o1, course.java.sdm.engine.Store o2) {
-//                return o1.getMapItemToPrices().get(item.getInventoryItemId()).compareTo(o2.getMapItemToPrices().get(item.getInventoryItemId()));
-//            }
-//        };
-
         Comparator<Store> comparator = (store1, store2) -> store1.getMapItemToPrices().get(item.getInventoryItemId()).compareTo(store2.getMapItemToPrices().get(item.getInventoryItemId()));
         Set<Store> storesWithItem = inventory.getMapItemsToStoresWithItem().get(item);
         Store cheapestStore = Collections.min(storesWithItem, comparator);
@@ -376,9 +318,83 @@ public class SDM {
         return cheapestStore;
     }
 
-    public void removeItemFromStore(InventoryItem chosenItem, Store storeChoice) {
-        storeChoice.getInventoryItems().remove(chosenItem);
-        inventory.getMapItemsToStoresWithItem().get(chosenItem).remove(storeChoice);
+
+
+    public String canAddExistingItemToStore(String input, Store store) {
+        Inventory inventory = getInventory();
+        List<Integer> listItemsAllowedToAddToStore = inventory.getListOfItemsNotSoldByStore(store)
+                .stream().map(item -> item.getInventoryItemId()).collect(Collectors.toList());
+
+        String outputString = "";
+        try{
+            int id = Integer.parseInt(input);
+
+            if (!inventory.getListOfInventoryItemIds().contains(id)){
+                outputString = outputString.concat(String.format("Operation failed: No item with id=%s can be found in system!\n", input));
+            }
+
+            else if (!listItemsAllowedToAddToStore.contains(id)){
+                outputString = outputString.concat(String.format("Operation failed: Store %s already contains an item with id=%s\n", store.getStoreName(), input)   );
+            }
+            return outputString;
+
+        } catch (NumberFormatException e){
+            return String.format("Error: Invalid input. %s does not correspond to a valid item-Id", input);
+        }
+    }
+
+
+    public void addInventoryItemToStore(InventoryItem item, Store store, int price){
+        store.addItemToStoreInventory(item, price);
+        inventory.updateStoresCarryingItems(stores);
+        inventory.updateAvePrice();
+    }
+
+
+
+    public String removeItemFromStore(String input, Store store) {
+        Boolean canRemoveItem = true;
+        Inventory inventory = getInventory();
+
+        String outputString = "";
+        try{
+            int id = Integer.parseInt(input);
+            if (!inventory.getListOfInventoryItemIds().contains(id)){
+                outputString = outputString.concat("Remove failed: no existing item with item-Id=" + id + " found in inventory.\n");
+                return outputString;
+            }
+            else{
+                InventoryItem item = inventory.getInventoryItemById(id);
+                Set<Store> storesWithItem = inventory.getMapItemsToStoresWithItem().get(item);
+
+                if (!storesWithItem.contains(store)){
+                    outputString = outputString.concat("Remove failed: Store " + store.getStoreName() + " does not sell item with id= " + id + ".\n");
+                    canRemoveItem = false;
+                }
+                if (storesWithItem.contains(store) && storesWithItem.size() == 1){
+                    outputString = outputString.concat("Remove failed: Store " + store.getStoreName() + " is currently the only store selling item " + id +"\n");
+                    canRemoveItem = false;
+                }
+
+                if (canRemoveItem){
+                    String s = String.format("\nItem %d was successfully BANISHED from store %s! MWA-HA-HA-HA!!!", item.getInventoryItemId(), store.getStoreName());
+
+                    store.getInventoryItems().remove(item);
+                    inventory.getMapItemsToStoresWithItem().get(item).remove(store);
+                    inventory.updateAvePrice();
+                    outputString = outputString.concat(s);
+                }
+                return outputString;
+            }
+
+        } catch (NumberFormatException e){
+            outputString = outputString.concat("Error: Invalid input. " + input + " does not correspond to a valid item-Id");
+            return outputString;
+        }
+    }
+
+    public void updateItemPriceAtStore(InventoryItem chosenItem, Store storeChoice, int price) {
+        storeChoice.getMapItemToPrices().put(chosenItem.getInventoryItemId(), price);
         inventory.updateAvePrice();
     }
 }

@@ -13,17 +13,13 @@ public class Store {
     private int storeId;
     private String storeName;
     private int deliveryPpk;
-
-    public void setTotalDeliveryIncome(float totalDeliveryIncome) {
-        this.totalDeliveryIncome = totalDeliveryIncome;
-    }
-
     private float totalDeliveryIncome;
     private HashMap<Integer, Float> mapItemsToAmountSold;
     private HashMap<Integer, Integer> mapItemToPrices;
     private List<InventoryItem> inventoryItems;
     private List<Integer> storeLocation;
     private List<Order> orders;
+
 
     public Store(SDMStore store) {
         this.storeId = store.getId();
@@ -43,7 +39,10 @@ public class Store {
         }
 
         this.orders = new ArrayList<>();
-        //System.out.println("Successfully created store " + storeId + "!");
+    }
+
+    public void setTotalDeliveryIncome(float totalDeliveryIncome) {
+        this.totalDeliveryIncome = totalDeliveryIncome;
     }
 
     public List<InventoryItem> getInventoryItems() {
@@ -67,7 +66,6 @@ public class Store {
     public void setStoreInventory(List<InventoryItem> i_inventoryItems) {
         if (this.inventoryItems != null)
             this.inventoryItems = new ArrayList<>();
-
         this.inventoryItems = i_inventoryItems;
     }
 
@@ -84,7 +82,6 @@ public class Store {
         return storeLocation;
     }
 
-
     public List<Order> getOrders() {
         if (orders == null)
             orders = new ArrayList<Order>();
@@ -97,14 +94,11 @@ public class Store {
     }
 
     public void addOrder(Order order) {
-        //System.out.println("\nEntered course.java.sdm.engine.Store.addOrder()");
-        //System.out.println("about to call orders.add(order)");
         orders.add(order);
         setTotalDeliveryIncome(order.getDeliveryCost()+this.getTotalDeliveryIncome());
         updateStoreInventory(order.getCartForThisOrder());
     }
 
-    //assuming storing amountSold as float
     private void updateStoreInventory(Cart cart) {
         cart.getCart().forEach((k, v) -> {
             float amountInCart = v.getItemAmount();
@@ -118,7 +112,6 @@ public class Store {
             if (item.getInventoryItemId() == priceID)
                 return item;
         }
-        System.out.printf("Error: No such itemId exists in %s's inventory!", getStoreName());
         return null;
     }
 
@@ -130,37 +123,6 @@ public class Store {
         Collections.sort(inventoryItems);
         mapItemsToAmountSold.put(item.getInventoryItemId(), 0f);
         mapItemToPrices.put(item.getInventoryItemId(), price);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Store store = (Store) o;
-
-        //TODO: Make sure that this equals implementation is okay (i.e., that we can define equals based only on immutable fields (id, name, userlocation, ppk))
-        return storeId == store.storeId &&
-                deliveryPpk == store.deliveryPpk &&
-                storeName.equals(store.storeName) &&
-                Objects.equals(storeLocation, store.storeLocation);
-
-        /*Original version:*/
-//        return storeId == store.storeId &&
-//                deliveryPpk == store.deliveryPpk &&
-//                storeName.equals(store.storeName) &&
-//                Objects.equals(storeLocation, store.storeLocation) &&
-//                Objects.equals(inventoryItems, store.inventoryItems) &&
-//                Objects.equals(mapItemsToAmountSold, store.mapItemsToAmountSold) &&
-//                Objects.equals(mapItemToPrices, store.mapItemToPrices) &&
-//                Objects.equals(orders, store.orders);
-    }
-
-    @Override
-    public int hashCode() {
-
-        return Objects.hash(storeId, storeName, storeLocation, deliveryPpk);
-        //Original:
-//        return Objects.hash(storeId, storeName, storeLocation, deliveryPpk, inventoryItems);
     }
 
     public float getDeliveryCost(List<Integer> userLocation) {
@@ -175,5 +137,23 @@ public class Store {
         int xDelta = userLocation.get(0) -storeLocation.get(0);
         int yDelta = userLocation.get(1) -storeLocation.get(1);
         return (float) Math.sqrt((xDelta*xDelta)+(yDelta*yDelta));
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Store store = (Store) o;
+
+
+        return storeId == store.storeId &&
+                deliveryPpk == store.deliveryPpk &&
+                storeName.equals(store.storeName) &&
+                Objects.equals(storeLocation, store.storeLocation);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(storeId, storeName, storeLocation, deliveryPpk);
     }
 }

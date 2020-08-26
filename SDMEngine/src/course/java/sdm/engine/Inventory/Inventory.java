@@ -25,11 +25,7 @@ public class Inventory {
 
 
     public void addNewItemToInventory(InventoryItem item) {
-        //System.out.println("Just entered addNewItemToInventory() for item " + item.getInventoryItemId());
-        //System.out.println("Result of setInventoryItems.contains(item): " + listInventoryItems.contains(item));
-
         listInventoryItems.add(item);
-        //System.out.println("Added item " + item.getInventoryItemId() + "");
         mapItemsToTotalSold.put(item, 0f);
         mapItemsToAvePrice.put(item, 0f);
         mapItemsToStoresWithItem.put(item, new HashSet<Store>());
@@ -63,7 +59,6 @@ public class Inventory {
     }
 
     private void updateSalesMap(CartItem cartItem) {
-
         InventoryItem item = getInventoryItemById(cartItem.getInventoryItemId());
         float oldAmount = mapItemsToTotalSold.get(item);
         mapItemsToTotalSold.put(item, oldAmount + cartItem.getItemAmount());
@@ -116,9 +111,6 @@ public class Inventory {
         }
     }
 
-    public boolean canItemBeRemovedFromStore(InventoryItem item, Store store){
-        return mapItemsToStoresWithItem.get(item).contains(store);
-    }
 
 
     public List<Integer> getListOfInventoryItemIds(){
@@ -128,5 +120,8 @@ public class Inventory {
     public List<InventoryItem> getListOfItemsNotSoldByStore(Store store){
         return listInventoryItems.stream().filter( item-> !mapItemsToStoresWithItem.get(item).contains(store)).collect(Collectors.toList());
     }
+
+
+
 
 }
